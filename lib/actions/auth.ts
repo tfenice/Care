@@ -13,10 +13,12 @@ export async function signIn(formData: FormData) {
     redirect("/login?error=1");
   }
 
-  // Derive origin from the incoming request — no env var required.
-  // The browser always sends the `origin` header on form POSTs.
+  // Derive origin from host + forwarded-proto — more reliable than the
+  // origin header, which Vercel may omit on Server Action POST requests.
   const headerStore = await headers();
-  const origin = headerStore.get("origin") ?? "";
+  const host = headerStore.get("host") ?? "";
+  const proto = headerStore.get("x-forwarded-proto") ?? "https";
+  const origin = host ? `${proto}://${host}` : "";
 
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithOtp({
