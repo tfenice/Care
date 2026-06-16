@@ -21,9 +21,10 @@ export async function signIn(formData: FormData) {
         emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL ?? "https://care-eight-kappa.vercel.app"}/auth/callback`,
       },
     });
-    if (error) errMsg = error.message;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if (error) errMsg = `SEND:${error.name}|${(error as any).status}|${error.message}`;
   } catch (e: unknown) {
-    errMsg = e instanceof Error ? e.message : "เกิดข้อผิดพลาด";
+    errMsg = `SEND_THROW:${e instanceof Error ? `${e.name}:${e.message}` : String(e)}`;
   }
 
   if (errMsg) {
