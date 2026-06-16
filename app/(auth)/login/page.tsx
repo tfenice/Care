@@ -8,13 +8,13 @@ export default async function LoginPage({
 }) {
   const params = await searchParams;
   const sent = params.sent === "1";
-  const hasError = !!params.error;
+  const errorMsg = typeof params.error === "string" ? params.error : params.error ? "เกิดข้อผิดพลาด" : null;
 
   if (sent) {
     return <ConfirmationView />;
   }
 
-  return <LoginForm hasError={hasError} />;
+  return <LoginForm errorMsg={errorMsg} />;
 }
 
 function ConfirmationView() {
@@ -50,7 +50,7 @@ function ConfirmationView() {
   );
 }
 
-function LoginForm({ hasError }: { hasError: boolean }) {
+function LoginForm({ errorMsg }: { errorMsg: string | null }) {
   return (
     <div className="space-y-10">
       <div className="text-center space-y-4">
@@ -77,9 +77,9 @@ function LoginForm({ hasError }: { hasError: boolean }) {
             placeholder="อีเมลของคุณ"
             className="w-full px-4 py-3 rounded-2xl border border-sand bg-white/60 text-ink placeholder:text-muted focus:outline-none focus:border-brown transition-colors"
           />
-          {hasError && (
-            <p className="text-sm text-error pl-1">
-              เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง
+          {errorMsg && (
+            <p className="text-sm text-error pl-1 break-all">
+              {errorMsg}
             </p>
           )}
         </div>

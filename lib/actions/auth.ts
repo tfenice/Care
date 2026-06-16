@@ -29,7 +29,7 @@ export async function signIn(formData: FormData) {
   });
 
   if (error) {
-    redirect("/login?error=1");
+    redirect(`/login?error=${encodeURIComponent(error.message)}`);
   }
 
   redirect("/login?sent=1");
