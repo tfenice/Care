@@ -24,7 +24,7 @@ export async function signIn(formData: FormData) {
   const { error } = await supabase.auth.signInWithOtp({
     email,
     options: {
-      emailRedirectTo: `${origin}/auth/callback?next=/checkin`,
+      emailRedirectTo: `${origin}/auth/callback`,
     },
   });
 
