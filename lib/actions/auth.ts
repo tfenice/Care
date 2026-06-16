@@ -13,10 +13,8 @@ export async function signIn(formData: FormData) {
     redirect("/login?error=1");
   }
 
-  // Derive origin from host + forwarded-proto — more reliable than the
-  // origin header, which Vercel may omit on Server Action POST requests.
   const headerStore = await headers();
-  const host = headerStore.get("host") ?? "";
+  const host = headerStore.get("x-forwarded-host") ?? headerStore.get("host") ?? "";
   const proto = headerStore.get("x-forwarded-proto") ?? "https";
   const origin = host ? `${proto}://${host}` : "";
 
