@@ -34,8 +34,10 @@ export async function GET(request: NextRequest) {
 
   const { error } = await supabase.auth.exchangeCodeForSession(code)
   if (error) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const detail = `name=${error.name}|msg=${error.message}|status=${(error as any).status}|code=${(error as any).code}`
     return NextResponse.redirect(
-      new URL(`/login?error=${encodeURIComponent(error.message)}`, origin)
+      new URL(`/login?error=${encodeURIComponent(detail)}`, origin)
     )
   }
 
