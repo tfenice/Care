@@ -53,6 +53,26 @@ All items below must be resolved before a public beta or production launch.
 
 ## Medium (fix before retention features)
 
+### TYPE-01 — weekly_reflections missing from Supabase CLI codegen
+**Impact:** `types/database.ts` is hand-maintained. When the Supabase CLI is set up (`supabase gen types typescript`), it will overwrite the file and `weekly_reflections` must be re-added (or ideally auto-generated).
+**Files:** `types/database.ts`, `supabase/migrations/003_weekly_reflections.sql`
+**Status:** Table definition hand-written and correct. Once the CLI is wired up, delete the hand-written block and let codegen own the file.
+
+### DEMO-01 — demo fixtures at lib/demo/* must be replaced with real queries
+**Impact:** All pages import from `lib/demo/`. When auth is restored, each import must be replaced with a user-scoped Supabase query that filters by the authenticated `user_id`.
+**Files:** `lib/demo/dashboard.ts`, `lib/demo/memory.ts`, `lib/demo/growth.ts`, `lib/demo/admin.ts`, `lib/demo/history.ts`
+**Fix:** In Launch Hardening Sprint, delete `lib/demo/` and replace every import site with a real fetch. Each fixture file has a "Demo-only until Launch Hardening Sprint" comment marking the replacement point.
+
+### TZ-01 — Bangkok week-boundary must be verified before persistence
+**Status:** `getWeekBounds()` in `lib/services/weeklyReflection.ts` was fixed to derive day-of-week from `bangkokDate + 'T00:00:00Z'` via `getUTCDay()` — server-local timezone no longer affects the result. The fix must be verified end-to-end with real Bangkok timestamps before `weekly_reflections` rows are persisted.
+**Files:** `lib/services/weeklyReflection.ts` (`getWeekBounds`, `getPreviousWeekBounds`)
+**Fix:** When wiring real data, write an integration test: simulate a date at `23:55 UTC` on a Sunday and assert the bounds land on the correct Bangkok Monday.
+
+### ADMIN-01 — Admin route must remain server-side only
+**Impact:** If any admin data-fetching logic is moved to a Client Component, service-role credentials could be bundled into the browser.
+**Files:** `app/admin/page.tsx`
+**Fix:** Keep `app/admin/page.tsx` as a Server Component. Never add `"use client"` to it or import admin queries from Client Components. Service role access belongs only in Server Components, Server Actions, or Route Handlers.
+
 ### DB-01 — Migration 003 not run in production
 **File:** `supabase/migrations/003_weekly_reflections.sql`
 **Fix:** Run in Supabase SQL Editor or via `supabase db push`

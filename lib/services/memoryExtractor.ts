@@ -1,6 +1,14 @@
 // Memory Extractor — deterministic NLP-lite, no LLM
 // Extracts themes, recurring topics, and emotional patterns from journal text.
 
+/**
+ * Input contract for extractMemories().
+ *
+ * Limits enforced inside extractMemories() — caller does not need to pre-slice:
+ *   journals  — at most 50 entries processed (oldest dropped first)
+ *   checkins  — at most 90 entries processed
+ *   body      — truncated to 2 000 chars per journal before keyword matching
+ */
 export interface MemoryInput {
   journals: Array<{ body: string; created_at: string }>
   checkins: Array<{ mood_key: string; note: string | null; checked_in_at: string }>
@@ -12,18 +20,23 @@ export interface ExtractedMemory {
   themes: string[]
 }
 
+// Input bounds — guard against outsized payloads from future real-data wiring
+const MAX_JOURNALS   = 50
+const MAX_CHECKINS   = 90
+const MAX_BODY_CHARS = 2_000
+
 // ── Keyword dictionaries ──────────────────────────────────────────────────────
 // Each theme maps to Thai keywords that signal it.
 
 const THEME_KEYWORDS: Record<string, string[]> = {
-  'ครอบครัว': ['แม่', 'พ่อ', 'ครอบครัว', 'น้อง', 'พี่', 'ลูก', 'สามี', 'ภรรยา', 'บ้าน'],
-  'การงาน': ['งาน', 'ออฟฟิศ', 'เพื่อนร่วมงาน', 'หัวหน้า', 'ประชุม', 'โปรเจกต์', 'เส้นตาย', 'ลูกค้า'],
-  'ความสัมพันธ์': ['เพื่อน', 'แฟน', 'คนรัก', 'คุย', 'ทะเลาะ', 'คิดถึง', 'เหงา', 'ขาดหาย'],
-  'สุขภาพ': ['นอน', 'กิน', 'ออกกำลังกาย', 'เจ็บ', 'ป่วย', 'หมอ', 'พักผ่อน', 'เหนื่อย'],
-  'ความกังวล': ['กังวล', 'กลัว', 'ไม่แน่ใจ', 'สับสน', 'ไม่รู้', 'กดดัน', 'เครียด', 'ยาก'],
-  'ความหวัง': ['หวัง', 'อยาก', 'ฝัน', 'ตั้งใจ', 'พยายาม', 'เริ่ม', 'ดีขึ้น', 'ก้าวหน้า'],
-  'ความสุข': ['สนุก', 'ดีใจ', 'ชอบ', 'รัก', 'มีความสุข', 'ยิ้ม', 'หัวเราะ', 'สบาย'],
-  'การยอมรับ': ['ยอมรับ', 'ปล่อยวาง', 'ผ่านมาได้', 'โอเค', 'ไม่เป็นไร', 'เข้าใจ', 'ให้อภัย'],
+  'ครอบครัว':       ['แม่', 'พ่อ', 'ครอบครัว', 'น้อง', 'พี่', 'ลูก', 'สามี', 'ภรรยา', 'บ้าน'],
+  'การงาน':         ['งาน', 'ออฟฟิศ', 'เพื่อนร่วมงาน', 'หัวหน้า', 'ประชุม', 'โปรเจกต์', 'เส้นตาย', 'ลูกค้า'],
+  'ความสัมพันธ์':   ['เพื่อน', 'แฟน', 'คนรัก', 'คุย', 'ทะเลาะ', 'คิดถึง', 'เหงา', 'ขาดหาย'],
+  'สุขภาพ':         ['นอน', 'กิน', 'ออกกำลังกาย', 'เจ็บ', 'ป่วย', 'หมอ', 'พักผ่อน', 'เหนื่อย'],
+  'ความกังวล':      ['กังวล', 'กลัว', 'ไม่แน่ใจ', 'สับสน', 'ไม่รู้', 'กดดัน', 'เครียด', 'ยาก'],
+  'ความหวัง':       ['หวัง', 'อยาก', 'ฝัน', 'ตั้งใจ', 'พยายาม', 'เริ่ม', 'ดีขึ้น', 'ก้าวหน้า'],
+  'ความสุข':        ['สนุก', 'ดีใจ', 'ชอบ', 'รัก', 'มีความสุข', 'ยิ้ม', 'หัวเราะ', 'สบาย'],
+  'การยอมรับ':      ['ยอมรับ', 'ปล่อยวาง', 'ผ่านมาได้', 'โอเค', 'ไม่เป็นไร', 'เข้าใจ', 'ให้อภัย'],
 }
 
 // ── Theme extractor ────────────────────────────────────────────────────────────
@@ -97,13 +110,19 @@ function extractJournalMemories(journals: MemoryInput['journals']): ExtractedMem
 // ── Main export ────────────────────────────────────────────────────────────────
 
 export function extractMemories(input: MemoryInput): ExtractedMemory[] {
+  // Apply bounds before any processing
+  const journals = input.journals
+    .slice(0, MAX_JOURNALS)
+    .map(j => ({ ...j, body: j.body.slice(0, MAX_BODY_CHARS) }))
+  const checkins = input.checkins.slice(0, MAX_CHECKINS)
+
   const memories: ExtractedMemory[] = []
 
   // 1. Journal theme patterns
-  memories.push(...extractJournalMemories(input.journals))
+  memories.push(...extractJournalMemories(journals))
 
   // 2. Mood pattern memory
-  const moodPattern = analyzeMoodPattern(input.checkins)
+  const moodPattern = analyzeMoodPattern(checkins)
   if (moodPattern) {
     memories.push({
       content: moodPattern,
@@ -113,7 +132,7 @@ export function extractMemories(input: MemoryInput): ExtractedMemory[] {
   }
 
   // 3. Synthesis: combine mood + themes
-  const allThemes = input.journals.flatMap(j => extractThemes(j.body))
+  const allThemes = journals.flatMap(j => extractThemes(j.body))
   const topTheme = allThemes.length > 0
     ? Object.entries(
         allThemes.reduce<Record<string, number>>((acc, t) => {
@@ -122,9 +141,9 @@ export function extractMemories(input: MemoryInput): ExtractedMemory[] {
       ).sort((a, b) => b[1] - a[1])[0]?.[0]
     : null
 
-  if (topTheme && input.checkins.length >= 3) {
+  if (topTheme && checkins.length >= 3) {
     const dominantMood = Object.entries(
-      input.checkins.reduce<Record<string, number>>((acc, c) => {
+      checkins.reduce<Record<string, number>>((acc, c) => {
         acc[c.mood_key] = (acc[c.mood_key] ?? 0) + 1; return acc
       }, {})
     ).sort((a, b) => b[1] - a[1])[0]?.[0]

@@ -1,42 +1,15 @@
+// PROTOTYPE — all data is demo-only. Replace DEMO_GROWTH with user-scoped
+// Supabase queries in Launch Hardening Sprint.
+
 import Link from 'next/link'
 import { generateWeeklyReflection } from '@/lib/services/weeklyReflection'
-
-// AUTH DISABLED: demo data. Replace with user-scoped Supabase queries.
-const DEMO = {
-  streak: 3,
-  longest: 7,
-  totalCheckins: 12,
-  totalCards: 9,
-  totalJournals: 5,
-  moodBreakdown: [
-    { mood: 'สบายดี', count: 5 },
-    { mood: 'พอไหว', count: 4 },
-    { mood: 'เหนื่อย', count: 2 },
-    { mood: 'สับสน', count: 1 },
-  ],
-  last30: [
-    false, false, false, false, false, false, false,
-    false, false, false, false, false, false, false,
-    false, false, false, false, true,  false, false,
-    true,  true,  false, true,  true,  false, true,
-    true,  true,
-  ],
-  last7: [
-    { day: 'จ', mood: 'เหนื่อย' as string | null },
-    { day: 'อ', mood: 'พอไหว' as string | null },
-    { day: 'พ', mood: null },
-    { day: 'พฤ', mood: 'เหนื่อย' as string | null },
-    { day: 'ศ', mood: 'สบายดี' as string | null },
-    { day: 'ส', mood: 'พอไหว' as string | null },
-    { day: 'อา', mood: 'พอไหว' as string | null },
-  ],
-}
+import { DEMO_GROWTH, DEMO_GROWTH_WEEK_JOURNALS, DEMO_GROWTH_WEEK_CARDS } from '@/lib/demo/growth'
 
 const MOOD_DOT: Record<string, string> = {
-  สบายดี: 'bg-brown',
-  พอไหว:  'bg-brown/50',
+  สบายดี:  'bg-brown',
+  พอไหว:   'bg-brown/50',
   เหนื่อย: 'bg-sand border border-sand',
-  สับสน:  'bg-muted/30',
+  สับสน:   'bg-muted/30',
 }
 
 function gentleInterpretation(streak: number, dominant: string | null, checkinPct: number): string {
@@ -67,26 +40,20 @@ function gentleInterpretation(streak: number, dominant: string | null, checkinPc
 
 function weeklyReflectionDemo() {
   return generateWeeklyReflection({
-    checkins: DEMO.last7
+    checkins: DEMO_GROWTH.last7
       .filter(d => d.mood !== null)
       .map(d => ({ mood_key: d.mood!, note: null })),
-    journals: [
-      { body: 'วันนี้รู้สึกดีขึ้น' },
-      { body: 'เหนื่อยแต่ก็ไหว' },
-    ],
-    cards: [
-      { category_name_th: 'การยอมรับ', title_th: '' },
-      { category_name_th: 'การยอมรับ', title_th: '' },
-    ],
+    journals: DEMO_GROWTH_WEEK_JOURNALS,
+    cards:    DEMO_GROWTH_WEEK_CARDS,
   })
 }
 
 export default function GrowthPage() {
-  const maxMoodCount = Math.max(...DEMO.moodBreakdown.map(m => m.count))
-  const checkinPct = DEMO.totalCheckins / 30
-  const dominant = DEMO.moodBreakdown[0]?.mood ?? null
-  const interpretation = gentleInterpretation(DEMO.streak, dominant, checkinPct)
-  const weekReflect = weeklyReflectionDemo()
+  const maxMoodCount  = Math.max(...DEMO_GROWTH.moodBreakdown.map(m => m.count))
+  const checkinPct    = DEMO_GROWTH.totalCheckins / 30
+  const dominant      = DEMO_GROWTH.moodBreakdown[0]?.mood ?? null
+  const interpretation = gentleInterpretation(DEMO_GROWTH.streak, dominant, checkinPct)
+  const weekReflect   = weeklyReflectionDemo()
 
   return (
     <div className="max-w-md mx-auto px-6 py-10 pb-32 space-y-6">
@@ -102,19 +69,19 @@ export default function GrowthPage() {
         <p className="text-xs tracking-[0.2em] uppercase text-brown font-light">Streak</p>
         <div className="flex justify-around">
           <div className="text-center">
-            <p className="text-4xl font-semibold text-ink">{DEMO.streak}</p>
+            <p className="text-4xl font-semibold text-ink">{DEMO_GROWTH.streak}</p>
             <p className="text-xs text-muted font-light mt-1">วันปัจจุบัน</p>
           </div>
           <div className="w-px bg-sand" />
           <div className="text-center">
-            <p className="text-4xl font-semibold text-brown">{DEMO.longest}</p>
+            <p className="text-4xl font-semibold text-brown">{DEMO_GROWTH.longest}</p>
             <p className="text-xs text-muted font-light mt-1">สถิติสูงสุด</p>
           </div>
         </div>
         <div>
           <p className="text-xs text-muted font-light mb-3">30 วันที่ผ่านมา</p>
           <div className="grid grid-cols-10 gap-1.5">
-            {DEMO.last30.map((checked, i) => (
+            {DEMO_GROWTH.last30.map((checked, i) => (
               <div
                 key={i}
                 className={`w-full aspect-square rounded-sm ${checked ? 'bg-brown' : 'bg-sand/60'}`}
@@ -127,9 +94,9 @@ export default function GrowthPage() {
       {/* ── Lifetime counters ───────────────────────────────────────────────── */}
       <div className="grid grid-cols-3 gap-3">
         {[
-          { label: 'เช็คอิน', value: DEMO.totalCheckins },
-          { label: 'การ์ด', value: DEMO.totalCards },
-          { label: 'บันทึก', value: DEMO.totalJournals },
+          { label: 'เช็คอิน',  value: DEMO_GROWTH.totalCheckins },
+          { label: 'การ์ด',    value: DEMO_GROWTH.totalCards },
+          { label: 'บันทึก',   value: DEMO_GROWTH.totalJournals },
         ].map(({ label, value }) => (
           <div key={label} className="rounded-2xl border border-sand bg-white/30 px-4 py-4 text-center">
             <p className="text-2xl font-semibold text-ink">{value}</p>
@@ -142,7 +109,7 @@ export default function GrowthPage() {
       <section className="rounded-3xl border border-sand bg-white/40 px-6 py-6 space-y-4">
         <p className="text-xs tracking-[0.2em] uppercase text-brown font-light">7 วันล่าสุด</p>
         <div className="flex justify-between">
-          {DEMO.last7.map(({ day, mood }) => (
+          {DEMO_GROWTH.last7.map(({ day, mood }) => (
             <div key={day} className="flex flex-col items-center gap-2">
               <div className={`w-7 h-7 rounded-full flex items-center justify-center ${
                 mood ? (MOOD_DOT[mood] ?? 'bg-sand') : 'bg-sand/40 border border-sand/60'
@@ -190,7 +157,7 @@ export default function GrowthPage() {
       <section className="rounded-3xl border border-sand bg-white/40 px-6 py-6 space-y-4">
         <p className="text-xs tracking-[0.2em] uppercase text-brown font-light">อารมณ์โดยรวม</p>
         <div className="space-y-3">
-          {DEMO.moodBreakdown.map(({ mood, count }) => (
+          {DEMO_GROWTH.moodBreakdown.map(({ mood, count }) => (
             <div key={mood} className="space-y-1.5">
               <div className="flex justify-between">
                 <span className="text-sm font-light text-ink">{mood}</span>

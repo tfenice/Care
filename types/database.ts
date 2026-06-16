@@ -206,6 +206,45 @@ export interface Database {
         Update: never
         Relationships: []
       }
+
+      weekly_reflections: {
+        Row: {
+          id: string
+          user_id: string
+          week_start: string
+          week_end: string
+          checkin_count: number
+          dominant_mood: string | null
+          mood_theme: string | null
+          top_card_category: string | null
+          journal_count: number
+          reflection_text: string
+          generated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          week_start: string
+          week_end: string
+          checkin_count?: number
+          dominant_mood?: string | null
+          mood_theme?: string | null
+          top_card_category?: string | null
+          journal_count?: number
+          reflection_text: string
+          generated_at?: string
+        }
+        Update: {
+          checkin_count?: number
+          dominant_mood?: string | null
+          mood_theme?: string | null
+          top_card_category?: string | null
+          journal_count?: number
+          reflection_text?: string
+          generated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: Record<string, never>
     Functions: Record<string, never>
@@ -214,10 +253,11 @@ export interface Database {
 }
 
 // Convenience row aliases — use these in application code
-export type DbProfile        = Database['public']['Tables']['profiles']['Row']
-export type DbCardCategory   = Database['public']['Tables']['card_categories']['Row']
-export type DbRitualCard     = Database['public']['Tables']['ritual_cards']['Row']
-export type DbDailyCheckin   = Database['public']['Tables']['daily_checkins']['Row']
-export type DbJournalEntry   = Database['public']['Tables']['journal_entries']['Row']
-export type DbReadingHistory = Database['public']['Tables']['reading_history']['Row']
-export type DbUserMemory     = Database['public']['Tables']['user_memories']['Row']
+export type DbProfile            = Database['public']['Tables']['profiles']['Row']
+export type DbCardCategory       = Database['public']['Tables']['card_categories']['Row']
+export type DbRitualCard         = Database['public']['Tables']['ritual_cards']['Row']
+export type DbDailyCheckin       = Database['public']['Tables']['daily_checkins']['Row']
+export type DbJournalEntry       = Database['public']['Tables']['journal_entries']['Row']
+export type DbReadingHistory     = Database['public']['Tables']['reading_history']['Row']
+export type DbUserMemory         = Database['public']['Tables']['user_memories']['Row']
+export type DbWeeklyReflection   = Database['public']['Tables']['weekly_reflections']['Row']

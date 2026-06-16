@@ -1,24 +1,9 @@
+// PROTOTYPE — all data is demo-only. Replace DEMO_JOURNALS / DEMO_CHECKINS
+// with user-scoped Supabase queries in Launch Hardening Sprint.
+
 import Link from 'next/link'
 import { extractMemories, extractThemes, type ExtractedMemory } from '@/lib/services/memoryExtractor'
-
-// AUTH DISABLED: demo input. Replace with user-scoped Supabase queries.
-
-const DEMO_JOURNALS = [
-  { body: 'วันนี้คุยกับแม่แล้วรู้สึกดีขึ้นมาก ครอบครัวสำคัญมากจริงๆ', created_at: '2026-06-14' },
-  { body: 'งานเยอะมาก เหนื่อยจริงๆ แต่ก็พยายามต่อไป เพื่อนร่วมงานช่วยได้เยอะ', created_at: '2026-06-13' },
-  { body: 'นอนไม่หลับ คิดเรื่องงานตลอด กังวลเรื่องเส้นตายที่จะมาถึง', created_at: '2026-06-12' },
-  { body: 'วันหยุดอยู่บ้านกับครอบครัว มีความสุขมาก สบายใจมากกว่าวันธรรมดา', created_at: '2026-06-11' },
-  { body: 'เริ่มออกกำลังกายใหม่ หวังว่าจะทำได้ต่อเนื่อง รู้สึกดีขึ้นนิดหน่อย', created_at: '2026-06-10' },
-]
-
-const DEMO_CHECKINS = [
-  { mood_key: 'เหนื่อย', note: null, checked_in_at: '2026-06-14' },
-  { mood_key: 'พอไหว',  note: null, checked_in_at: '2026-06-13' },
-  { mood_key: 'เหนื่อย', note: null, checked_in_at: '2026-06-12' },
-  { mood_key: 'สบายดี', note: null, checked_in_at: '2026-06-11' },
-  { mood_key: 'พอไหว',  note: null, checked_in_at: '2026-06-10' },
-  { mood_key: 'เหนื่อย', note: null, checked_in_at: '2026-06-09' },
-]
+import { DEMO_JOURNALS, DEMO_CHECKINS } from '@/lib/demo/memory'
 
 function getPageData() {
   const memories = extractMemories({ journals: DEMO_JOURNALS, checkins: DEMO_CHECKINS })

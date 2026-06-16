@@ -1,6 +1,17 @@
+// PROTOTYPE — all data is demo-only. Replace getDashboardData(), getWeeklyReflectionDemo(),
+// and getMemoriesDemo() with user-scoped Supabase queries in Launch Hardening Sprint.
+
 import Link from 'next/link'
 import { generateWeeklyReflection } from '@/lib/services/weeklyReflection'
 import { extractMemories, type ExtractedMemory } from '@/lib/services/memoryExtractor'
+import {
+  DEMO_DASHBOARD,
+  DEMO_WEEK_CHECKINS,
+  DEMO_WEEK_JOURNALS,
+  DEMO_WEEK_CARDS,
+  DEMO_MEMORY_JOURNALS,
+  DEMO_MEMORY_CHECKINS,
+} from '@/lib/demo/dashboard'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -16,68 +27,20 @@ type DashboardData = {
 }
 
 // ── Data layer ────────────────────────────────────────────────────────────────
-// AUTH DISABLED: demo data. Replace body of getDashboardData() with parallel
-// Supabase fetches when auth is restored.
 
 async function getDashboardData(): Promise<DashboardData> {
-  return {
-    name: null,
-    streak: 3,
-    longestStreak: 7,
-    totalCheckins: 12,
-    totalJournals: 5,
-    totalCards: 9,
-    latestJournal: {
-      body: 'วันนี้รู้สึกเหนื่อยนิดหน่อย แต่ก็ผ่านมาได้ทุกครั้ง บางทีการแค่หยุดพักก็เพียงพอแล้วสำหรับวันนี้',
-    },
-    latestCard: {
-      categoryNameTh: 'การยอมรับ',
-      titleTh: 'ให้เวลากับตัวเองสักนิด',
-      bodyTh: 'บางวันแค่ได้หยุดพักก็เพียงพอแล้ว คุณไม่จำเป็นต้องทำทุกอย่างให้สมบูรณ์แบบ',
-    },
-  }
+  return DEMO_DASHBOARD
 }
-
-// ── Memory (deterministic extraction, no LLM) ────────────────────────────────
-// AUTH DISABLED: demo input. When auth restored, swap for real fetches.
 
 function getMemoriesDemo(): ExtractedMemory[] {
-  return extractMemories({
-    journals: [
-      { body: 'วันนี้คุยกับแม่แล้วรู้สึกดีขึ้น ครอบครัวสำคัญมาก', created_at: '2026-06-14' },
-      { body: 'งานเยอะมาก เหนื่อย แต่ก็พยายามต่อไป', created_at: '2026-06-13' },
-      { body: 'วันหยุดอยู่บ้านกับครอบครัว มีความสุข', created_at: '2026-06-11' },
-    ],
-    checkins: [
-      { mood_key: 'เหนื่อย', note: null, checked_in_at: '2026-06-14' },
-      { mood_key: 'พอไหว', note: null, checked_in_at: '2026-06-13' },
-      { mood_key: 'สบายดี', note: null, checked_in_at: '2026-06-11' },
-      { mood_key: 'เหนื่อย', note: null, checked_in_at: '2026-06-10' },
-    ],
-  })
+  return extractMemories({ journals: DEMO_MEMORY_JOURNALS, checkins: DEMO_MEMORY_CHECKINS })
 }
-
-// ── Weekly reflection (deterministic, no LLM) ─────────────────────────────────
-// AUTH DISABLED: demo input. When auth restored, swap for real fetches.
 
 function getWeeklyReflectionDemo() {
   return generateWeeklyReflection({
-    checkins: [
-      { mood_key: 'เหนื่อย', note: null },
-      { mood_key: 'พอไหว', note: null },
-      { mood_key: 'พอไหว', note: null },
-      { mood_key: 'สบายดี', note: null },
-      { mood_key: 'พอไหว', note: null },
-    ],
-    journals: [
-      { body: 'วันนี้รู้สึกดีขึ้นมาก' },
-      { body: 'เหนื่อยแต่ก็ยังไหว' },
-    ],
-    cards: [
-      { category_name_th: 'การยอมรับ', title_th: 'ให้เวลากับตัวเองสักนิด' },
-      { category_name_th: 'การยอมรับ', title_th: 'ความเป็นมนุษย์ที่ไม่สมบูรณ์' },
-      { category_name_th: 'ความหวัง', title_th: 'แสงเล็กๆ ที่ยังมีอยู่' },
-    ],
+    checkins: DEMO_WEEK_CHECKINS,
+    journals: DEMO_WEEK_JOURNALS,
+    cards:    DEMO_WEEK_CARDS,
   })
 }
 
@@ -201,7 +164,7 @@ export default async function HomePage() {
           {[
             { value: data.totalCheckins, label: 'เช็คอิน' },
             { value: data.totalJournals, label: 'บันทึก' },
-            { value: data.totalCards, label: 'การ์ด' },
+            { value: data.totalCards,    label: 'การ์ด' },
           ].map(({ value, label }) => (
             <div key={label} className="text-center">
               <p className="text-2xl font-semibold text-ink">{value}</p>
@@ -235,7 +198,7 @@ export default async function HomePage() {
         <div className="grid grid-cols-2 gap-2">
           {[
             { href: '/checkin', label: 'เช็คอินวันนี้' },
-            { href: '/cards', label: 'ดูการ์ด' },
+            { href: '/cards',   label: 'ดูการ์ด' },
             { href: '/journal', label: 'เขียนบันทึก' },
             { href: '/history', label: 'ดูย้อนหลัง' },
           ].map(({ href, label }) => (
@@ -255,9 +218,9 @@ export default async function HomePage() {
         <p className="text-xs tracking-[0.2em] uppercase text-brown font-light px-1">สำรวจ</p>
         <div className="grid grid-cols-2 gap-2">
           {[
-            { href: '/growth',  label: 'การเติบโต' },
-            { href: '/memory',  label: 'ความทรงจำ' },
-            { href: '/profile', label: 'โปรไฟล์' },
+            { href: '/growth',   label: 'การเติบโต' },
+            { href: '/memory',   label: 'ความทรงจำ' },
+            { href: '/profile',  label: 'โปรไฟล์' },
             { href: '/settings', label: 'ตั้งค่า' },
           ].map(({ href, label }) => (
             <Link

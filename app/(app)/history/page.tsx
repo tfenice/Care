@@ -1,14 +1,9 @@
+// PROTOTYPE — all data is demo-only. Replace DEMO_HISTORY_ENTRIES with
+// user-scoped Supabase queries in Launch Hardening Sprint.
+
 import Link from 'next/link'
 import HistoryEntry from '@/components/care/HistoryEntry'
-
-// AUTH DISABLED: demo data
-const DEMO_ENTRIES = [
-  { key: '1', displayDate: '16 มิถุนายน', moodKey: 'พอไหว', cardTitle: 'ให้เวลากับตัวเองสักนิด', journalBody: 'วันนี้รู้สึกเหมือนมีอะไรหลายอย่างที่ต้องทำ แต่ก็พยายามจัดการทีละอย่าง' },
-  { key: '2', displayDate: '15 มิถุนายน', moodKey: 'สบายดี', cardTitle: 'ความเงียบคือพื้นที่ให้ใจพัก', journalBody: null },
-  { key: '3', displayDate: '14 มิถุนายน', moodKey: 'เหนื่อย', cardTitle: null, journalBody: 'เหนื่อยมากวันนี้ แต่ก็ผ่านมาได้' },
-  { key: '4', displayDate: '13 มิถุนายน', moodKey: 'สบายดี', cardTitle: 'หยุดพักแล้วไปต่อได้เสมอ', journalBody: null },
-  { key: '5', displayDate: '12 มิถุนายน', moodKey: 'สับสน', cardTitle: null, journalBody: null },
-]
+import { DEMO_HISTORY_ENTRIES } from '@/lib/demo/history'
 
 export default async function HistoryPage() {
   return (
@@ -19,7 +14,7 @@ export default async function HistoryPage() {
       </div>
 
       <div>
-        {DEMO_ENTRIES.map(entry => (
+        {DEMO_HISTORY_ENTRIES.map(entry => (
           <HistoryEntry
             key={entry.key}
             displayDate={entry.displayDate}

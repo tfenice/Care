@@ -4,6 +4,15 @@
 
 import { MOOD_KEYS, type MoodKey } from '@/types/models'
 
+/**
+ * Input contract for generateWeeklyReflection().
+ *
+ * Limits enforced inside the function — caller does not need to pre-slice:
+ *   checkins  — at most 7 entries processed (one per day in a 7-day window)
+ *   journals  — at most 7 entries processed
+ *   cards     — at most 50 entries processed
+ *   body      — truncated to 2 000 chars per journal before analysis
+ */
 export interface WeekInput {
   checkins: Array<{ mood_key: string; note: string | null }>
   journals: Array<{ body: string }>
@@ -19,13 +28,19 @@ export interface WeekOutput {
   reflection_text: string
 }
 
+// Input bounds — guard against oversized payloads from future real-data wiring
+const MAX_CHECKINS   = 7     // one per day
+const MAX_JOURNALS   = 7
+const MAX_CARDS      = 50
+const MAX_BODY_CHARS = 2_000
+
 // ── Mood → theme mapping ────────────────────────────────────────────────────
 
 const MOOD_THEMES: Record<string, string> = {
   สบายดี: 'ความสุขและความสมดุล',
-  พอไหว: 'ความพยายามและความอดทน',
+  พอไหว:  'ความพยายามและความอดทน',
   เหนื่อย: 'การดูแลตัวเองและการพักผ่อน',
-  สับสน: 'การค้นหาและการยอมรับ',
+  สับสน:  'การค้นหาและการยอมรับ',
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -99,43 +114,59 @@ function buildReflectionText(p: {
 // ── Main export ───────────────────────────────────────────────────────────────
 
 export function generateWeeklyReflection(input: WeekInput): WeekOutput {
-  const moodCounts = countBy(input.checkins, c =>
+  // Apply bounds before processing
+  const checkins = input.checkins.slice(0, MAX_CHECKINS)
+  const journals  = input.journals
+    .slice(0, MAX_JOURNALS)
+    .map(j => ({ body: j.body.slice(0, MAX_BODY_CHARS) }))
+  const cards = input.cards.slice(0, MAX_CARDS)
+
+  const moodCounts = countBy(checkins, c =>
     MOOD_KEYS.includes(c.mood_key as MoodKey) ? c.mood_key : null
   )
-  const catCounts = countBy(input.cards, c => c.category_name_th)
+  const catCounts = countBy(cards, c => c.category_name_th)
 
-  const dominantMood = topKey(moodCounts)
+  const dominantMood    = topKey(moodCounts)
   const topCardCategory = topKey(catCounts)
-  const moodTheme = dominantMood ? (MOOD_THEMES[dominantMood] ?? null) : null
+  const moodTheme       = dominantMood ? (MOOD_THEMES[dominantMood] ?? null) : null
 
   const reflectionText = buildReflectionText({
     dominantMood,
-    checkinCount: input.checkins.length,
-    journalCount: input.journals.length,
-    topCategory: topCardCategory,
+    checkinCount: checkins.length,
+    journalCount: journals.length,
+    topCategory:  topCardCategory,
   })
 
   return {
-    checkin_count: input.checkins.length,
-    dominant_mood: dominantMood,
-    mood_theme: moodTheme,
+    checkin_count:     checkins.length,
+    dominant_mood:     dominantMood,
+    mood_theme:        moodTheme,
     top_card_category: topCardCategory,
-    journal_count: input.journals.length,
-    reflection_text: reflectionText,
+    journal_count:     journals.length,
+    reflection_text:   reflectionText,
   }
 }
 
-// ── Week boundary helpers ──────────────────────────────────────────────────
+// ── Week boundary helpers ─────────────────────────────────────────────────────
+// Always derive the day-of-week from the Bangkok calendar date to avoid
+// server-local-timezone skew (e.g. a UTC server on Sunday night is already
+// Monday morning in Bangkok).
 
 export function getWeekBounds(date: Date, tz = 'Asia/Bangkok'): { start: string; end: string } {
-  const fmt = (d: Date) =>
-    new Intl.DateTimeFormat('en-CA', { timeZone: tz }).format(d)
-  const ms = date.getTime()
-  // day of week 0=Sun..6=Sat; shift so Mon=0
-  const dow = (date.getDay() + 6) % 7
-  const monday = new Date(ms - dow * 86_400_000)
-  const sunday = new Date(ms + (6 - dow) * 86_400_000)
-  return { start: fmt(monday), end: fmt(sunday) }
+  // 1. Get the calendar date in the target timezone as 'YYYY-MM-DD'
+  const bangkokDate = new Intl.DateTimeFormat('en-CA', { timeZone: tz }).format(date)
+  // 2. Treat that date as a UTC midnight reference — getUTCDay() is then
+  //    unaffected by the server's local timezone.
+  const ref = new Date(bangkokDate + 'T00:00:00Z')
+  // 3. Shift so Mon=0 … Sun=6
+  const dow = (ref.getUTCDay() + 6) % 7
+  const monday = new Date(ref.getTime() - dow * 86_400_000)
+  const sunday = new Date(ref.getTime() + (6 - dow) * 86_400_000)
+  // 4. Slice ISO string — safe since both dates are at UTC midnight
+  return {
+    start: monday.toISOString().slice(0, 10),
+    end:   sunday.toISOString().slice(0, 10),
+  }
 }
 
 export function getPreviousWeekBounds(tz = 'Asia/Bangkok'): { start: string; end: string } {

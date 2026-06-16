@@ -1,69 +1,12 @@
-// Founder Analytics — /admin
-// No chart library. Static demo data; replace with Supabase service-role queries when auth is live.
-// Access control: middleware should gate this to the founder email only.
+// PROTOTYPE — founder-internal only. All data is demo-only.
+// Replace with service-role Supabase queries in Launch Hardening Sprint.
+// This route must be gated to the founder email before any public deploy.
+//
+// SAFETY: This file must remain a Server Component (no "use client").
+// Never import admin queries or service-role credentials into Client Components —
+// doing so would bundle them into the browser bundle. See ADMIN-01 in KNOWN_TECH_DEBT.md.
 
-type DailyStats = {
-  date: string
-  checkins: number
-  journals: number
-  cardsDrawn: number
-  activeUsers: number
-}
-
-type OverviewStats = {
-  totalUsers: number
-  dau: number
-  wau: number
-  totalCheckins: number
-  totalJournals: number
-  totalCardsDrawn: number
-  streakDistribution: Record<string, number>
-  moodFrequency: Record<string, number>
-  topCardCategories: Array<{ category: string; count: number }>
-}
-
-// AUTH DISABLED: demo data. Replace with service-role Supabase queries.
-async function getAdminData(): Promise<{ overview: OverviewStats; dailyStats: DailyStats[] }> {
-  const overview: OverviewStats = {
-    totalUsers: 3,
-    dau: 2,
-    wau: 3,
-    totalCheckins: 47,
-    totalJournals: 18,
-    totalCardsDrawn: 34,
-    streakDistribution: {
-      '0': 0,
-      '1–3': 1,
-      '4–7': 1,
-      '8–14': 1,
-      '15+': 0,
-    },
-    moodFrequency: {
-      'สบายดี': 14,
-      'พอไหว':  18,
-      'เหนื่อย': 10,
-      'สับสน':   5,
-    },
-    topCardCategories: [
-      { category: 'การยอมรับ', count: 12 },
-      { category: 'ความหวัง',  count: 9 },
-      { category: 'การอยู่กับปัจจุบัน', count: 7 },
-      { category: 'การเติบโต', count: 6 },
-    ],
-  }
-
-  const dailyStats: DailyStats[] = [
-    { date: '2026-06-16', checkins: 2, journals: 1, cardsDrawn: 2, activeUsers: 2 },
-    { date: '2026-06-15', checkins: 3, journals: 2, cardsDrawn: 3, activeUsers: 3 },
-    { date: '2026-06-14', checkins: 2, journals: 1, cardsDrawn: 2, activeUsers: 2 },
-    { date: '2026-06-13', checkins: 3, journals: 2, cardsDrawn: 4, activeUsers: 3 },
-    { date: '2026-06-12', checkins: 1, journals: 0, cardsDrawn: 1, activeUsers: 1 },
-    { date: '2026-06-11', checkins: 2, journals: 1, cardsDrawn: 3, activeUsers: 2 },
-    { date: '2026-06-10', checkins: 3, journals: 2, cardsDrawn: 2, activeUsers: 3 },
-  ]
-
-  return { overview, dailyStats }
-}
+import { DEMO_OVERVIEW, DEMO_DAILY_STATS } from '@/lib/demo/admin'
 
 function StatCard({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
   return (
@@ -76,7 +19,8 @@ function StatCard({ label, value, sub }: { label: string; value: string | number
 }
 
 export default async function AdminPage() {
-  const { overview, dailyStats } = await getAdminData()
+  const overview   = DEMO_OVERVIEW
+  const dailyStats = DEMO_DAILY_STATS
 
   const maxCheckins = Math.max(...dailyStats.map(d => d.checkins), 1)
   const streakTotal = Object.values(overview.streakDistribution).reduce((a, b) => a + b, 0)
@@ -96,12 +40,12 @@ export default async function AdminPage() {
       <section className="space-y-3">
         <p className="text-xs tracking-[0.2em] uppercase text-brown font-light">ภาพรวม</p>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-          <StatCard label="Total Users" value={overview.totalUsers} />
-          <StatCard label="DAU" value={overview.dau} sub="วันนี้" />
-          <StatCard label="WAU" value={overview.wau} sub="7 วันที่ผ่านมา" />
-          <StatCard label="Check-ins" value={overview.totalCheckins} sub="ทั้งหมด" />
-          <StatCard label="Journals" value={overview.totalJournals} sub="ทั้งหมด" />
-          <StatCard label="Cards Drawn" value={overview.totalCardsDrawn} sub="ทั้งหมด" />
+          <StatCard label="Total Users"  value={overview.totalUsers} />
+          <StatCard label="DAU"          value={overview.dau}           sub="วันนี้" />
+          <StatCard label="WAU"          value={overview.wau}           sub="7 วันที่ผ่านมา" />
+          <StatCard label="Check-ins"    value={overview.totalCheckins}  sub="ทั้งหมด" />
+          <StatCard label="Journals"     value={overview.totalJournals}  sub="ทั้งหมด" />
+          <StatCard label="Cards Drawn"  value={overview.totalCardsDrawn} sub="ทั้งหมด" />
         </div>
       </section>
 
@@ -110,8 +54,8 @@ export default async function AdminPage() {
         <p className="text-xs tracking-[0.2em] uppercase text-brown font-light">Check-ins / วัน (7 วัน)</p>
         <div className="flex items-end gap-2 h-24">
           {dailyStats.map(day => {
-            const pct = Math.round((day.checkins / maxCheckins) * 100)
-            const label = day.date.slice(5) // MM-DD
+            const pct   = Math.round((day.checkins / maxCheckins) * 100)
+            const label = day.date.slice(5)
             return (
               <div key={day.date} className="flex flex-col items-center gap-1 flex-1">
                 <span className="text-xs text-muted font-light">{day.checkins}</span>
@@ -155,25 +99,6 @@ export default async function AdminPage() {
         </div>
       </section>
 
-      {/* ── Streak Distribution ───────────────────────────────────────────────── */}
-      <section className="rounded-3xl border border-sand bg-white/40 px-6 py-6 space-y-4">
-        <p className="text-xs tracking-[0.2em] uppercase text-brown font-light">Streak Distribution</p>
-        <div className="space-y-2">
-          {Object.entries(overview.streakDistribution).map(([bucket, count]) => {
-            const pct = streakTotal > 0 ? Math.round((count / streakTotal) * 100) : 0
-            return (
-              <div key={bucket} className="flex items-center gap-3">
-                <span className="text-xs text-muted font-light w-12 shrink-0">{bucket} วัน</span>
-                <div className="flex-1 h-2 rounded-full bg-sand overflow-hidden">
-                  <div className="h-full rounded-full bg-brown/40" style={{ width: `${pct}%` }} />
-                </div>
-                <span className="text-xs text-muted font-light w-6 text-right">{count}</span>
-              </div>
-            )
-          })}
-        </div>
-      </section>
-
       {/* ── Most common moods ─────────────────────────────────────────────────── */}
       <section className="rounded-3xl border border-sand bg-white/40 px-6 py-6 space-y-4">
         <p className="text-xs tracking-[0.2em] uppercase text-brown font-light">อารมณ์ที่พบบ่อย</p>
@@ -211,6 +136,25 @@ export default async function AdminPage() {
               <span className="text-xs text-muted font-light w-6 text-right">{count}</span>
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* ── Streak Distribution ───────────────────────────────────────────────── */}
+      <section className="rounded-3xl border border-sand bg-white/40 px-6 py-6 space-y-4">
+        <p className="text-xs tracking-[0.2em] uppercase text-brown font-light">Streak Distribution</p>
+        <div className="space-y-2">
+          {Object.entries(overview.streakDistribution).map(([bucket, count]) => {
+            const pct = streakTotal > 0 ? Math.round((count / streakTotal) * 100) : 0
+            return (
+              <div key={bucket} className="flex items-center gap-3">
+                <span className="text-xs text-muted font-light w-12 shrink-0">{bucket} วัน</span>
+                <div className="flex-1 h-2 rounded-full bg-sand overflow-hidden">
+                  <div className="h-full rounded-full bg-brown/40" style={{ width: `${pct}%` }} />
+                </div>
+                <span className="text-xs text-muted font-light w-6 text-right">{count}</span>
+              </div>
+            )
+          })}
         </div>
       </section>
 
