@@ -34,7 +34,8 @@ export async function GET(request: NextRequest) {
     if (!error) {
       return NextResponse.redirect(new URL(next, origin))
     }
+    return NextResponse.redirect(new URL(`/login?error=${encodeURIComponent(error.message)}`, origin))
   }
 
-  return NextResponse.redirect(new URL('/login?error=auth_callback_failed', origin))
+  return NextResponse.redirect(new URL('/login?error=no_code', origin))
 }
