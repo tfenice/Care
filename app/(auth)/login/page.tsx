@@ -8,12 +8,7 @@ export default async function LoginPage({
 }) {
   const params = await searchParams;
   const sent = params.sent === "1";
-  const rawError = typeof params.error === "string" ? params.error : null;
-  const errorMsg = rawError
-    ? rawError.includes("expired") || rawError.includes("otp_expired")
-      ? "ลิงก์หมดอายุแล้ว กรุณาขอลิงก์ใหม่"
-      : "เกิดข้อผิดพลาด กรุณาลองใหม่"
-    : null;
+  const errorMsg = typeof params.error === "string" ? params.error : params.error ? "error" : null;
 
   if (sent) {
     return <ConfirmationView />;
