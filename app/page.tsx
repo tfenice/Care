@@ -3,7 +3,7 @@ import Link from "next/link";
 
 export default async function LandingPage() {
   // AUTH DISABLED: go straight to app
-  redirect("/cards");
+  redirect("/home");
 
   return (
     <main className="min-h-screen bg-cream flex items-center justify-center px-6">

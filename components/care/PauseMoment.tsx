@@ -1,57 +1,46 @@
-// ─────────────────────────────────────────────────────────────────────────────
-// PauseMoment — Design System Concept
-// Status: NOT YET IMPLEMENTED — scheduled for Sprint 1B (card draw feature)
-// ─────────────────────────────────────────────────────────────────────────────
-//
-// PURPOSE
-// A full-screen interstitial that creates intentional breathing room between
-// the check-in and the card reveal. It marks the transition from "input" to
-// "receiving" — the user shifts from reporting their mood to being open to a
-// reflection.
-//
-// THE RITUAL IDEA
-// Drawing a card in Care is not a casual swipe. It is a small deliberate act,
-// like lighting a candle before sitting down to read. PauseMoment is the UI
-// expression of that intention — it says: slow down, you are about to receive
-// something for yourself.
-//
-// INTENDED USAGE (Sprint 1B)
-//
-//   <PauseMoment
-//     heading="หายใจลึก ๆ สักครั้ง"
-//     body="แล้วค่อยรับข้อความสำหรับวันนี้"
-//     onContinue={handleRevealCard}
-//   />
-//
-// BEHAVIOR WHEN BUILT
-// - Renders full-screen over cream background
-// - Heading fades in, vertically centered, large and unhurried
-// - Body text appears 800ms after heading, slightly smaller, color: muted
-// - A slowly pulsing circle (opacity 0.15 → 0.35 → 0.15 on 3s loop) sits
-//   behind the text — not a spinner, just a breath
-// - After 2.5 seconds OR on any tap/click, calls onContinue
-// - Transition out: 400ms fade to cream → card appears
-//
-// ANIMATION FEEL
-// - Think: a long, slow exhale — not a loading screen, not a reveal curtain
-// - No sparkles. No dramatic flash. No sound.
-// - The pause IS the feature, not a delay before the feature.
-//
-// AESTHETIC CONSTRAINTS
-// - Colors: cream background, ink text only — no accent colors during the pause
-// - Typography: font-light, generous line-height (leading-loose)
-// - The circle pulse uses bg-brown at very low opacity
-// - Zero border-radius on the overlay (it fills the viewport edge to edge)
-//
-// PROP INTERFACE (when implemented)
-//
-//   type PauseMomentProps = {
-//     heading: string         // "หายใจลึก ๆ สักครั้ง"
-//     body?: string           // optional second line
-//     onContinue: () => void  // called after auto-advance or user tap
-//     durationMs?: number     // default: 2500
-//   }
-//
-// ─────────────────────────────────────────────────────────────────────────────
+"use client";
 
-export {};
+import { useEffect, useCallback } from "react";
+
+interface Props {
+  heading?: string;
+  body?: string;
+  onContinue: () => void;
+  durationMs?: number;
+}
+
+export default function PauseMoment({
+  heading = "หายใจลึก ๆ สักครั้ง",
+  body = "แล้วค่อยรับข้อความสำหรับวันนี้",
+  onContinue,
+  durationMs = 2500,
+}: Props) {
+  const advance = useCallback(() => onContinue(), [onContinue]);
+
+  useEffect(() => {
+    const t = setTimeout(advance, durationMs);
+    return () => clearTimeout(t);
+  }, [advance, durationMs]);
+
+  return (
+    <div
+      className="fixed inset-0 bg-cream flex items-center justify-center cursor-pointer z-50"
+      onClick={advance}
+      role="button"
+      aria-label="แตะเพื่อดำเนินการต่อ"
+    >
+      <div className="text-center space-y-10 px-10">
+        {/* Breathing circle */}
+        <div className="relative mx-auto w-24 h-24">
+          <div className="absolute inset-0 rounded-full border border-brown/20 animate-ping" style={{ animationDuration: '3s' }} />
+          <div className="absolute inset-3 rounded-full border border-brown/40 animate-pulse" style={{ animationDuration: '3s' }} />
+          <div className="absolute inset-6 rounded-full bg-brown/15" />
+        </div>
+        <div className="space-y-3">
+          <h1 className="text-2xl font-light text-ink leading-loose">{heading}</h1>
+          {body && <p className="text-muted font-light leading-8">{body}</p>}
+        </div>
+      </div>
+    </div>
+  );
+}
