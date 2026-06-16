@@ -1,46 +1,42 @@
-export default function Home() {
-  const moods = ["สบายดี", "พอไหว", "เหนื่อย", "สับสน"];
+import { createClient } from "@/lib/supabase/server";
+import { redirect } from "next/navigation";
+import Link from "next/link";
+
+export default async function LandingPage() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (user) redirect("/checkin");
 
   return (
-    <main className="min-h-screen bg-[#F7F2EB] text-[#1E1F1C] flex items-center justify-center px-6">
-      <section className="max-w-md w-full text-center space-y-8">
-        <div className="space-y-3">
-          <p className="text-sm tracking-[0.25em] uppercase text-[#8B6F4E]">
+    <main className="min-h-screen bg-cream flex items-center justify-center px-6">
+      <section className="max-w-md w-full text-center space-y-10">
+        <div className="space-y-5">
+          <p className="text-sm tracking-[0.25em] uppercase text-brown font-light">
             CARE
           </p>
 
-          <h1 className="text-3xl font-semibold leading-snug">
+          <h1 className="text-3xl font-semibold leading-relaxed text-ink">
             วันนี้ใจของคุณ
             <br />
             เป็นอย่างไรบ้าง
           </h1>
 
-          <p className="text-[#6D735B] leading-7">
-            พื้นที่เล็ก ๆ ที่อยู่ตรงนี้
-            เพื่อรับฟังคุณอย่างอ่อนโยน
+          <p className="text-muted leading-8 font-light">
+            พื้นที่เล็ก ๆ
+            <br />
+            ที่อยู่ตรงนี้เพื่อรับฟังคุณ
           </p>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
-          {moods.map((mood) => (
-            <button
-              key={mood}
-              className="rounded-2xl border border-[#D8C7AE] bg-white/60 py-4 text-sm shadow-sm hover:bg-white transition"
-            >
-              {mood}
-            </button>
-          ))}
-        </div>
-
-        <div className="space-y-3">
-          <button className="w-full rounded-full bg-[#1E1F1C] text-[#F7F2EB] py-4">
-            หยิบไพ่ 1 ใบ
-          </button>
-
-          <button className="w-full rounded-full border border-[#8B6F4E] py-4 text-[#8B6F4E]">
-            พื้นที่พักใจ
-          </button>
-        </div>
+        <Link
+          href="/login"
+          className="block w-full rounded-full bg-ink text-cream py-4 text-center font-light tracking-wide transition-opacity hover:opacity-75"
+        >
+          เริ่มต้น
+        </Link>
       </section>
     </main>
   );
