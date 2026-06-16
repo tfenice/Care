@@ -1,5 +1,5 @@
 -- ─────────────────────────────────────────────────────────────────────────────
--- Care — Initial Schema
+-- Care — Initial Schema  (idempotent — safe to re-run)
 -- Run via: supabase db push  (or paste into Supabase SQL editor)
 -- ─────────────────────────────────────────────────────────────────────────────
 
@@ -17,7 +17,7 @@ $$;
 -- One row per auth.users entry. Created automatically via trigger on sign-up.
 -- Streak fields are updated server-side on each check-in submission.
 
-CREATE TABLE public.profiles (
+CREATE TABLE IF NOT EXISTS public.profiles (
   id                UUID     PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   display_name      TEXT,
   locale            TEXT     NOT NULL DEFAULT 'th',
@@ -30,6 +30,7 @@ CREATE TABLE public.profiles (
   updated_at        TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+DROP TRIGGER IF EXISTS profiles_updated_at ON public.profiles;
 CREATE TRIGGER profiles_updated_at
   BEFORE UPDATE ON public.profiles
   FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
@@ -44,6 +45,7 @@ BEGIN
 END;
 $$;
 
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
@@ -52,7 +54,7 @@ CREATE TRIGGER on_auth_user_created
 -- Four categories map to the product philosophy: Acceptance, Presence, Hope, Growth.
 -- sort_order enables curated deck ordering for future experiences.
 
-CREATE TABLE public.card_categories (
+CREATE TABLE IF NOT EXISTS public.card_categories (
   id         UUID     PRIMARY KEY DEFAULT gen_random_uuid(),
   slug       TEXT     NOT NULL UNIQUE,
   name_th    TEXT     NOT NULL,
@@ -62,6 +64,7 @@ CREATE TABLE public.card_categories (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+DROP TRIGGER IF EXISTS card_categories_updated_at ON public.card_categories;
 CREATE TRIGGER card_categories_updated_at
   BEFORE UPDATE ON public.card_categories
   FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
@@ -71,7 +74,7 @@ CREATE TRIGGER card_categories_updated_at
 -- i18n: if English content is needed in the future, add a ritual_cards_translations
 -- join table rather than adding columns here.
 
-CREATE TABLE public.ritual_cards (
+CREATE TABLE IF NOT EXISTS public.ritual_cards (
   id                   UUID     PRIMARY KEY DEFAULT gen_random_uuid(),
   category_id          UUID     NOT NULL REFERENCES public.card_categories(id) ON DELETE RESTRICT,
   title_th             TEXT     NOT NULL,
@@ -85,6 +88,7 @@ CREATE TABLE public.ritual_cards (
   updated_at           TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+DROP TRIGGER IF EXISTS ritual_cards_updated_at ON public.ritual_cards;
 CREATE TRIGGER ritual_cards_updated_at
   BEFORE UPDATE ON public.ritual_cards
   FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
@@ -93,7 +97,7 @@ CREATE TRIGGER ritual_cards_updated_at
 -- Records a user's mood at a point in time. Immutable after insert.
 -- Multiple check-ins per day are allowed.
 
-CREATE TABLE public.daily_checkins (
+CREATE TABLE IF NOT EXISTS public.daily_checkins (
   id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id       UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
   mood_key      TEXT NOT NULL,   -- 'สบายดี' | 'พอไหว' | 'เหนื่อย' | 'สับสน'
@@ -106,7 +110,7 @@ CREATE TABLE public.daily_checkins (
 -- Free-form reflections. Soft-deleted (deleted_at) to preserve emotional history.
 -- Privacy is enforced at the RLS layer; no application-level flag needed.
 
-CREATE TABLE public.journal_entries (
+CREATE TABLE IF NOT EXISTS public.journal_entries (
   id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id    UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
   checkin_id UUID REFERENCES public.daily_checkins(id) ON DELETE SET NULL,
@@ -116,6 +120,7 @@ CREATE TABLE public.journal_entries (
   deleted_at TIMESTAMPTZ
 );
 
+DROP TRIGGER IF EXISTS journal_entries_updated_at ON public.journal_entries;
 CREATE TRIGGER journal_entries_updated_at
   BEFORE UPDATE ON public.journal_entries
   FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
@@ -130,7 +135,7 @@ CREATE TRIGGER journal_entries_updated_at
 --             for this user — the card "seen longest ago" is the most refreshed.
 --   This avoids a hard wall and keeps the experience continuous without resetting.
 
-CREATE TABLE public.reading_history (
+CREATE TABLE IF NOT EXISTS public.reading_history (
   id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id    UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
   card_id    UUID NOT NULL REFERENCES public.ritual_cards(id) ON DELETE CASCADE,
@@ -150,6 +155,7 @@ BEGIN
 END;
 $$;
 
+DROP TRIGGER IF EXISTS reading_history_retention ON public.reading_history;
 CREATE TRIGGER reading_history_retention
   AFTER INSERT ON public.reading_history
   FOR EACH ROW EXECUTE FUNCTION public.enforce_reading_history_retention();
@@ -164,7 +170,7 @@ CREATE TRIGGER reading_history_retention
 --   ALTER TABLE public.user_memories ADD COLUMN embedding vector(1536);
 -- The schema is compatible with this addition without a breaking migration.
 
-CREATE TABLE public.user_memories (
+CREATE TABLE IF NOT EXISTS public.user_memories (
   id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id     UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
   content     TEXT NOT NULL,
@@ -175,14 +181,14 @@ CREATE TABLE public.user_memories (
 
 -- ── Indexes ───────────────────────────────────────────────────────────────────
 
-CREATE INDEX idx_checkins_user_time    ON public.daily_checkins (user_id, checked_in_at DESC);
-CREATE INDEX idx_reading_user_time     ON public.reading_history (user_id, read_at DESC);
-CREATE INDEX idx_reading_card          ON public.reading_history (card_id);
-CREATE INDEX idx_journal_user_active   ON public.journal_entries (user_id, created_at DESC)
+CREATE INDEX IF NOT EXISTS idx_checkins_user_time    ON public.daily_checkins (user_id, checked_in_at DESC);
+CREATE INDEX IF NOT EXISTS idx_reading_user_time     ON public.reading_history (user_id, read_at DESC);
+CREATE INDEX IF NOT EXISTS idx_reading_card          ON public.reading_history (card_id);
+CREATE INDEX IF NOT EXISTS idx_journal_user_active   ON public.journal_entries (user_id, created_at DESC)
   WHERE deleted_at IS NULL;
-CREATE INDEX idx_cards_tags_gin        ON public.ritual_cards USING GIN (tags);
-CREATE INDEX idx_cards_category_active ON public.ritual_cards (category_id) WHERE is_active = TRUE;
-CREATE INDEX idx_memories_user_time    ON public.user_memories (user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_cards_tags_gin        ON public.ritual_cards USING GIN (tags);
+CREATE INDEX IF NOT EXISTS idx_cards_category_active ON public.ritual_cards (category_id) WHERE is_active = TRUE;
+CREATE INDEX IF NOT EXISTS idx_memories_user_time    ON public.user_memories (user_id, created_at DESC);
 
 -- ── Row Level Security ────────────────────────────────────────────────────────
 
@@ -195,58 +201,70 @@ ALTER TABLE public.reading_history ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_memories   ENABLE ROW LEVEL SECURITY;
 
 -- profiles
+DROP POLICY IF EXISTS "profiles: owner select" ON public.profiles;
 CREATE POLICY "profiles: owner select"
   ON public.profiles FOR SELECT
   USING (auth.uid() = id);
 
+DROP POLICY IF EXISTS "profiles: owner update" ON public.profiles;
 CREATE POLICY "profiles: owner update"
   ON public.profiles FOR UPDATE
   USING (auth.uid() = id)
   WITH CHECK (auth.uid() = id);
 
 -- card_categories
+DROP POLICY IF EXISTS "card_categories: public select" ON public.card_categories;
 CREATE POLICY "card_categories: public select"
   ON public.card_categories FOR SELECT
   USING (is_active = TRUE);
 
 -- ritual_cards
+DROP POLICY IF EXISTS "ritual_cards: public select" ON public.ritual_cards;
 CREATE POLICY "ritual_cards: public select"
   ON public.ritual_cards FOR SELECT
   USING (is_active = TRUE);
 
 -- daily_checkins
+DROP POLICY IF EXISTS "daily_checkins: owner select" ON public.daily_checkins;
 CREATE POLICY "daily_checkins: owner select"
   ON public.daily_checkins FOR SELECT
   USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "daily_checkins: owner insert" ON public.daily_checkins;
 CREATE POLICY "daily_checkins: owner insert"
   ON public.daily_checkins FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
 -- journal_entries
+DROP POLICY IF EXISTS "journal_entries: owner select" ON public.journal_entries;
 CREATE POLICY "journal_entries: owner select"
   ON public.journal_entries FOR SELECT
   USING (auth.uid() = user_id AND deleted_at IS NULL);
 
+DROP POLICY IF EXISTS "journal_entries: owner insert" ON public.journal_entries;
 CREATE POLICY "journal_entries: owner insert"
   ON public.journal_entries FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "journal_entries: owner update" ON public.journal_entries;
 CREATE POLICY "journal_entries: owner update"
   ON public.journal_entries FOR UPDATE
   USING (auth.uid() = user_id AND deleted_at IS NULL)
   WITH CHECK (auth.uid() = user_id);
 
 -- reading_history
+DROP POLICY IF EXISTS "reading_history: owner select" ON public.reading_history;
 CREATE POLICY "reading_history: owner select"
   ON public.reading_history FOR SELECT
   USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "reading_history: owner insert" ON public.reading_history;
 CREATE POLICY "reading_history: owner insert"
   ON public.reading_history FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
 -- user_memories: users can read their own memories; only service role can write
+DROP POLICY IF EXISTS "user_memories: owner select" ON public.user_memories;
 CREATE POLICY "user_memories: owner select"
   ON public.user_memories FOR SELECT
   USING (auth.uid() = user_id);

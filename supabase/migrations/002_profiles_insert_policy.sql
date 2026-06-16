@@ -7,6 +7,7 @@
 -- The upsert in submitCheckin was blocked by RLS with error 42501.
 -- ─────────────────────────────────────────────────────────────────────────────
 
+DROP POLICY IF EXISTS "profiles: owner insert" ON public.profiles;
 CREATE POLICY "profiles: owner insert"
   ON public.profiles FOR INSERT
   WITH CHECK (auth.uid() = id);
