@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const NAV_ITEMS = [
-  { href: "/home", label: "หน้าหลัก" },
+  { href: "/", label: "หน้าหลัก" },
   { href: "/checkin", label: "เช็คอิน" },
   { href: "/cards", label: "การ์ด" },
   { href: "/journal", label: "บันทึก" },
@@ -18,7 +18,7 @@ export default function BottomNav() {
     <nav className="fixed bottom-0 inset-x-0 border-t border-sand bg-cream pb-safe">
       <div className="max-w-md mx-auto flex justify-around py-3">
         {NAV_ITEMS.map(({ href, label }) => {
-          const active = pathname === href || pathname.startsWith(href + '/');
+          const active = href === '/' ? pathname === '/' : pathname === href || pathname.startsWith(href + '/');
           return (
             <Link
               key={href}
