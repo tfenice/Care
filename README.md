@@ -1,37 +1,89 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Care
 
-## Getting Started
+A quiet daily check-in app for emotional wellbeing. Built with Next.js 16 and Supabase.
 
-First, run the development server:
+## Features
+
+- Magic-link authentication (no passwords)
+- Daily mood check-in with optional note
+- Ritual reflection card drawn after each check-in
+- Journal entry tied to the day's card
+- 30-day history view with streaks
+
+## Local Setup
+
+**Prerequisites:** Node.js 20+, a Supabase project
+
+1. Clone the repo and install dependencies:
+
+```bash
+npm install
+```
+
+2. Copy the env template and fill in your Supabase credentials:
+
+```bash
+cp .env.example .env.local
+```
+
+Set these values from your Supabase project dashboard (Settings → API):
+
+```
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+```
+
+3. Run the database migrations **in order** in the Supabase SQL Editor:
+
+```
+supabase/migrations/001_initial_schema.sql
+supabase/migrations/002_profiles_insert_policy.sql
+```
+
+4. Seed the ritual card deck:
+
+```
+supabase/seed_production.sql
+```
+
+Verify: `card_categories` has 4 rows, `ritual_cards` has 40 rows.
+
+5. Start the dev server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Project Structure
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+app/
+  (auth)/login/       Magic-link login
+  (app)/checkin/      Daily mood check-in
+  (app)/cards/        Ritual card draw
+  (app)/journal/      Daily journal entry
+  (app)/history/      30-day history view
+lib/actions/          Server Actions (auth, checkin, cards, journal)
+lib/supabase/         Supabase client helpers (server + browser)
+components/care/      Shared UI components
+supabase/migrations/  SQL migrations (run in order)
+types/                TypeScript types (database schema, models)
+```
 
-## Learn More
+## Deploying to Vercel
 
-To learn more about Next.js, take a look at the following resources:
+1. Push to GitHub
+2. Import the repo in Vercel
+3. Add environment variables: `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+4. Deploy
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Set your Supabase Auth redirect URL to `https://your-vercel-domain.vercel.app/auth/callback`.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Tech Stack
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-# Care
+- Next.js 16 (App Router, Server Actions)
+- Supabase (Auth, Postgres, RLS)
+- Tailwind CSS v4
+- TypeScript
