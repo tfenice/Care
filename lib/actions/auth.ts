@@ -12,11 +12,19 @@ export async function signIn(formData: FormData) {
     redirect("/login?error=1");
   }
 
-  const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithOtp({ email });
+  let errMsg: string | null = null;
+  try {
+    const supabase = await createClient();
+    const { error } = await supabase.auth.signInWithOtp({ email });
+    if (error) {
+      errMsg = `API:${error.status}:${error.name}:${error.message}`;
+    }
+  } catch (e: unknown) {
+    errMsg = e instanceof Error ? `THROW:${e.name}:${e.message}` : `THROW:${String(e)}`;
+  }
 
-  if (error) {
-    redirect(`/login?error=${encodeURIComponent(error.message)}`);
+  if (errMsg) {
+    redirect(`/login?error=${encodeURIComponent(errMsg)}`);
   }
 
   redirect("/login?sent=1");
