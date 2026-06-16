@@ -12,20 +12,19 @@ export async function signIn(formData: FormData) {
     redirect("/login?error=1");
   }
 
-  // --- URL DIAGNOSTIC: set errMsg here, skip signInWithOtp ---
-  const rawUrl = (process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").trim().replace(/\/$/, "");
-  const healthUrl = `${rawUrl}/auth/v1/health`;
-  let diagHealth = "?";
+  let errMsg: string | null = null;
   try {
-    const r = await fetch(healthUrl, {
-      headers: { apikey: (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "").trim() },
+    const supabase = await createClient();
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL ?? "https://care-eight-kappa.vercel.app"}/auth/callback`,
+      },
     });
-    diagHealth = `${r.status}`;
+    if (error) errMsg = error.message;
   } catch (e: unknown) {
-    diagHealth = `ERR:${e instanceof Error ? e.message : String(e)}`;
+    errMsg = e instanceof Error ? e.message : "เกิดข้อผิดพลาด";
   }
-  let errMsg: string | null = `LEN=${rawUrl.length}|END="${rawUrl.slice(-10)}"|HEALTH=${diagHealth}`;
-  // --- END DIAGNOSTIC ---
 
   if (errMsg) {
     redirect(`/login?error=${encodeURIComponent(errMsg)}`);
