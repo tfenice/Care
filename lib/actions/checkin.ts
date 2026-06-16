@@ -22,6 +22,12 @@ export async function submitCheckin(formData: FormData) {
   const today = bangkokDateString(now)
   const yesterday = bangkokDateString(new Date(now.getTime() - 86_400_000))
 
+  // Guarantee a profile row exists. The on_auth_user_created trigger handles new users
+  // going forward, but any user who authenticated before the migration ran has no row.
+  await supabase
+    .from('profiles')
+    .upsert({ id: user.id, updated_at: new Date().toISOString() }, { onConflict: 'id' })
+
   const { data: profile } = await supabase
     .from('profiles')
     .select('*')
