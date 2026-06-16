@@ -2,6 +2,9 @@
 //
 // When you add the Supabase CLI, replace this file with the generated output:
 //   npx supabase gen types typescript --project-id your-ref > types/database.ts
+//
+// Note: Supabase v2 requires Relationships: [] on every table definition even when there are
+// no TypeScript-level FK relationships to express. Without it the query builder returns never.
 
 export type Json = string | number | boolean | null | { [key: string]: Json } | Json[]
 
@@ -43,6 +46,7 @@ export interface Database {
           onboarded_at?: string | null
           updated_at?: string
         }
+        Relationships: []
       }
 
       card_categories: {
@@ -71,6 +75,7 @@ export interface Database {
           is_active?: boolean
           updated_at?: string
         }
+        Relationships: []
       }
 
       ritual_cards: {
@@ -111,6 +116,7 @@ export interface Database {
           is_active?: boolean
           updated_at?: string
         }
+        Relationships: []
       }
 
       daily_checkins: {
@@ -131,6 +137,7 @@ export interface Database {
           created_at?: string
         }
         Update: never
+        Relationships: []
       }
 
       journal_entries: {
@@ -157,6 +164,7 @@ export interface Database {
           deleted_at?: string | null
           updated_at?: string
         }
+        Relationships: []
       }
 
       reading_history: {
@@ -175,6 +183,7 @@ export interface Database {
           read_at?: string
         }
         Update: never
+        Relationships: []
       }
 
       user_memories: {
@@ -195,6 +204,7 @@ export interface Database {
           created_at?: string
         }
         Update: never
+        Relationships: []
       }
     }
     Views: Record<string, never>
