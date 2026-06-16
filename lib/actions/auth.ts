@@ -14,22 +14,24 @@ export async function signIn(formData: FormData) {
   }
 
   const headerStore = await headers();
-  const host = headerStore.get("x-forwarded-host") ?? headerStore.get("host") ?? "";
+  const xFwdHost = headerStore.get("x-forwarded-host") ?? "";
+  const hostHeader = headerStore.get("host") ?? "";
   const proto = headerStore.get("x-forwarded-proto") ?? "https";
-  const origin =
-    process.env.NEXT_PUBLIC_SITE_URL ??
-    (host ? `${proto}://${host}` : "");
+  const siteUrlEnv = process.env.NEXT_PUBLIC_SITE_URL ?? "";
+  const supabaseUrlEnv = (process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").slice(0, 40);
+  const origin = siteUrlEnv || (xFwdHost ? `${proto}://${xFwdHost}` : hostHeader ? `${proto}://${hostHeader}` : "");
 
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithOtp({
     email,
     options: {
-      emailRedirectTo: `${origin}/auth/callback`,
+      emailRedirectTo: origin ? `${origin}/auth/callback` : undefined,
     },
   });
 
   if (error) {
-    redirect(`/login?error=${encodeURIComponent(error.message)}`);
+    const debug = `err=${error.message} | origin=${origin || "EMPTY"} | siteUrl=${siteUrlEnv || "NOT_SET"} | xFwdHost=${xFwdHost || "NONE"} | host=${hostHeader || "NONE"} | supaUrl=${supabaseUrlEnv}`;
+    redirect(`/login?error=${encodeURIComponent(debug)}`);
   }
 
   redirect("/login?sent=1");
