@@ -16,7 +16,9 @@ export async function signIn(formData: FormData) {
   const headerStore = await headers();
   const host = headerStore.get("x-forwarded-host") ?? headerStore.get("host") ?? "";
   const proto = headerStore.get("x-forwarded-proto") ?? "https";
-  const origin = host ? `${proto}://${host}` : "";
+  const origin =
+    process.env.NEXT_PUBLIC_SITE_URL ??
+    (host ? `${proto}://${host}` : "");
 
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithOtp({
