@@ -12,6 +12,23 @@ export async function signIn(formData: FormData) {
     redirect("/login?error=1");
   }
 
+  // --- URL DIAGNOSTIC (remove after fix) ---
+  const rawUrl = (process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").trim().replace(/\/$/, "");
+  const healthUrl = `${rawUrl}/auth/v1/health`;
+  let diagResult = "?";
+  try {
+    const r = await fetch(healthUrl, {
+      headers: { apikey: (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "").trim() },
+    });
+    diagResult = `${r.status}`;
+  } catch (e: unknown) {
+    diagResult = `ERR:${e instanceof Error ? e.message : String(e)}`;
+  }
+  const urlEnd = rawUrl.slice(-10);
+  const urlLen = rawUrl.length;
+  redirect(`/login?error=${encodeURIComponent(`URL_LEN=${urlLen}|URL_END="${urlEnd}"|HEALTH=${diagResult}`)}`);
+  // --- END DIAGNOSTIC ---
+
   let errMsg: string | null = null;
   try {
     const supabase = await createClient();
