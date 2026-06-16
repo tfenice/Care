@@ -23,18 +23,21 @@ export default async function HistoryPage() {
   if (!checkins || checkins.length === 0) {
     return (
       <div className="min-h-screen flex items-center justify-center px-6">
-        <div className="max-w-md w-full text-center space-y-8">
-          <div className="space-y-4">
+        <div className="max-w-md w-full text-center space-y-10">
+          <div className="space-y-5">
             <p className="text-sm tracking-[0.25em] uppercase text-brown font-light">CARE</p>
-            <h1 className="text-2xl font-semibold text-ink">ย้อนดู</h1>
-            <p className="text-muted font-light leading-8">ยังไม่มีบันทึกย้อนหลัง</p>
-            <p className="text-muted font-light text-sm">เริ่มจากการเช็คอินวันนี้ก็พอ</p>
+            <h1 className="text-2xl font-semibold text-ink leading-relaxed">ย้อนดู</h1>
+            <p className="text-muted font-light leading-8">
+              ยังไม่มีบันทึกใดๆ เลย
+              <br />
+              เริ่มจากวันนี้ก็ได้นะ
+            </p>
           </div>
           <Link
             href="/checkin"
             className="block w-full rounded-full bg-ink text-cream py-4 text-center font-light tracking-wide transition-opacity hover:opacity-75"
           >
-            ไปเช็คอิน
+            เช็คอินวันนี้
           </Link>
         </div>
       </div>
