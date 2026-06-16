@@ -12,14 +12,8 @@ export async function signIn(formData: FormData) {
     redirect("/login?error=1");
   }
 
-  const siteUrlEnv = (process.env.NEXT_PUBLIC_SITE_URL ?? "").trim().replace(/\/$/, "");
-  const emailRedirectTo = siteUrlEnv ? `${siteUrlEnv}/auth/callback` : undefined;
-
   const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithOtp({
-    email,
-    options: { emailRedirectTo },
-  });
+  const { error } = await supabase.auth.signInWithOtp({ email });
 
   if (error) {
     redirect(`/login?error=${encodeURIComponent(error.message)}`);
