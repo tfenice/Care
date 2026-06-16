@@ -1,8 +1,10 @@
 import Link from 'next/link'
+import { generateWeeklyReflection } from '@/lib/services/weeklyReflection'
+import { extractMemories, type ExtractedMemory } from '@/lib/services/memoryExtractor'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-type DemoData = {
+type DashboardData = {
   name: string | null
   streak: number
   longestStreak: number
@@ -14,10 +16,10 @@ type DemoData = {
 }
 
 // ── Data layer ────────────────────────────────────────────────────────────────
-// AUTH DISABLED: returns demo data.
-// When auth is restored: replace with parallel Supabase fetches.
+// AUTH DISABLED: demo data. Replace body of getDashboardData() with parallel
+// Supabase fetches when auth is restored.
 
-async function getDashboardData(): Promise<DemoData> {
+async function getDashboardData(): Promise<DashboardData> {
   return {
     name: null,
     streak: 3,
@@ -36,6 +38,49 @@ async function getDashboardData(): Promise<DemoData> {
   }
 }
 
+// ── Memory (deterministic extraction, no LLM) ────────────────────────────────
+// AUTH DISABLED: demo input. When auth restored, swap for real fetches.
+
+function getMemoriesDemo(): ExtractedMemory[] {
+  return extractMemories({
+    journals: [
+      { body: 'วันนี้คุยกับแม่แล้วรู้สึกดีขึ้น ครอบครัวสำคัญมาก', created_at: '2026-06-14' },
+      { body: 'งานเยอะมาก เหนื่อย แต่ก็พยายามต่อไป', created_at: '2026-06-13' },
+      { body: 'วันหยุดอยู่บ้านกับครอบครัว มีความสุข', created_at: '2026-06-11' },
+    ],
+    checkins: [
+      { mood_key: 'เหนื่อย', note: null, checked_in_at: '2026-06-14' },
+      { mood_key: 'พอไหว', note: null, checked_in_at: '2026-06-13' },
+      { mood_key: 'สบายดี', note: null, checked_in_at: '2026-06-11' },
+      { mood_key: 'เหนื่อย', note: null, checked_in_at: '2026-06-10' },
+    ],
+  })
+}
+
+// ── Weekly reflection (deterministic, no LLM) ─────────────────────────────────
+// AUTH DISABLED: demo input. When auth restored, swap for real fetches.
+
+function getWeeklyReflectionDemo() {
+  return generateWeeklyReflection({
+    checkins: [
+      { mood_key: 'เหนื่อย', note: null },
+      { mood_key: 'พอไหว', note: null },
+      { mood_key: 'พอไหว', note: null },
+      { mood_key: 'สบายดี', note: null },
+      { mood_key: 'พอไหว', note: null },
+    ],
+    journals: [
+      { body: 'วันนี้รู้สึกดีขึ้นมาก' },
+      { body: 'เหนื่อยแต่ก็ยังไหว' },
+    ],
+    cards: [
+      { category_name_th: 'การยอมรับ', title_th: 'ให้เวลากับตัวเองสักนิด' },
+      { category_name_th: 'การยอมรับ', title_th: 'ความเป็นมนุษย์ที่ไม่สมบูรณ์' },
+      { category_name_th: 'ความหวัง', title_th: 'แสงเล็กๆ ที่ยังมีอยู่' },
+    ],
+  })
+}
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function truncate(text: string, max = 120) {
@@ -51,7 +96,12 @@ function greetingText(hour: number) {
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default async function HomePage() {
-  const data = await getDashboardData()
+  const [data, weekReflection] = await Promise.all([
+    getDashboardData(),
+    Promise.resolve(getWeeklyReflectionDemo()),
+  ])
+  const memories = getMemoriesDemo()
+  const topMemory = memories[memories.length - 1] ?? null
   const hour = new Date().getHours()
 
   return (
@@ -81,23 +131,54 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ── 3. Recent Reflection ───────────────────────────────────────────── */}
+      {/* ── 3. Weekly Reflection ───────────────────────────────────────────── */}
+      <section className="rounded-3xl border border-sand bg-white/40 px-6 py-6 space-y-4">
+        <div className="flex items-center justify-between">
+          <p className="text-xs tracking-[0.2em] uppercase text-brown font-light">สัปดาห์ที่ผ่านมา</p>
+          {weekReflection.dominant_mood && (
+            <span className="text-xs text-muted font-light border border-sand rounded-full px-3 py-1">
+              {weekReflection.dominant_mood}
+            </span>
+          )}
+        </div>
+        {weekReflection.mood_theme && (
+          <p className="text-sm font-light text-brown">{weekReflection.mood_theme}</p>
+        )}
+        <p className="text-sm font-light text-ink leading-7">
+          {weekReflection.reflection_text}
+        </p>
+        <div className="flex gap-4 pt-1">
+          <div className="text-center">
+            <p className="text-lg font-semibold text-ink">{weekReflection.checkin_count}</p>
+            <p className="text-xs text-muted font-light">เช็คอิน</p>
+          </div>
+          <div className="text-center">
+            <p className="text-lg font-semibold text-ink">{weekReflection.journal_count}</p>
+            <p className="text-xs text-muted font-light">บันทึก</p>
+          </div>
+          {weekReflection.top_card_category && (
+            <div className="text-center flex-1">
+              <p className="text-xs text-muted font-light">การ์ดยอดนิยม</p>
+              <p className="text-xs font-light text-ink mt-0.5">{weekReflection.top_card_category}</p>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* ── 4. Recent Reflection ───────────────────────────────────────────── */}
       {data.latestJournal && (
         <section className="rounded-3xl border border-sand bg-white/40 px-6 py-6 space-y-3">
           <p className="text-xs tracking-[0.2em] uppercase text-brown font-light">บันทึกล่าสุด</p>
           <p className="text-ink font-light leading-7 text-sm">
             {truncate(data.latestJournal.body)}
           </p>
-          <Link
-            href="/journal"
-            className="inline-block text-sm text-brown underline underline-offset-4 hover:opacity-70 transition-opacity"
-          >
+          <Link href="/journal" className="inline-block text-sm text-brown underline underline-offset-4 hover:opacity-70 transition-opacity">
             อ่านต่อ
           </Link>
         </section>
       )}
 
-      {/* ── 4. Recent Card ─────────────────────────────────────────────────── */}
+      {/* ── 5. Recent Card ─────────────────────────────────────────────────── */}
       {data.latestCard && (
         <section className="rounded-3xl border border-sand bg-white/40 px-6 py-6 space-y-3">
           <p className="text-xs tracking-[0.2em] uppercase text-brown font-light">
@@ -107,16 +188,13 @@ export default async function HomePage() {
           <p className="text-ink font-light leading-7 text-sm">
             {truncate(data.latestCard.bodyTh)}
           </p>
-          <Link
-            href="/cards"
-            className="inline-block text-sm text-brown underline underline-offset-4 hover:opacity-70 transition-opacity"
-          >
+          <Link href="/cards" className="inline-block text-sm text-brown underline underline-offset-4 hover:opacity-70 transition-opacity">
             ดูอีกครั้ง
           </Link>
         </section>
       )}
 
-      {/* ── 5. Growth Snapshot ─────────────────────────────────────────────── */}
+      {/* ── 6. Growth Snapshot ─────────────────────────────────────────────── */}
       <section className="rounded-3xl border border-sand bg-white/40 px-6 py-6 space-y-4">
         <p className="text-xs tracking-[0.2em] uppercase text-brown font-light">ภาพรวม</p>
         <div className="grid grid-cols-3 gap-4">
@@ -133,7 +211,25 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ── 6. Quick Actions ───────────────────────────────────────────────── */}
+      {/* ── 7. Memory Card ─────────────────────────────────────────────────── */}
+      {topMemory && (
+        <section className="rounded-3xl border border-sand bg-white/40 px-6 py-6 space-y-3">
+          <div className="flex items-center justify-between">
+            <p className="text-xs tracking-[0.2em] uppercase text-brown font-light">Care สังเกตเห็น</p>
+            {topMemory.themes.length > 0 && (
+              <span className="text-xs text-muted font-light border border-sand rounded-full px-3 py-1">
+                {topMemory.themes[0]}
+              </span>
+            )}
+          </div>
+          <p className="text-sm font-light text-ink leading-7">{topMemory.content}</p>
+          <Link href="/memory" className="inline-block text-sm text-brown underline underline-offset-4 hover:opacity-70 transition-opacity">
+            ดูทั้งหมด
+          </Link>
+        </section>
+      )}
+
+      {/* ── 8. Quick Actions ───────────────────────────────────────────────── */}
       <section className="space-y-2">
         <p className="text-xs tracking-[0.2em] uppercase text-brown font-light px-1">ลัดไป</p>
         <div className="grid grid-cols-2 gap-2">
@@ -147,6 +243,27 @@ export default async function HomePage() {
               key={href}
               href={href}
               className="rounded-2xl border border-sand bg-white/30 px-4 py-4 text-sm font-light text-ink hover:bg-white/60 transition-colors"
+            >
+              {label}
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      {/* ── 9. Secondary Nav ───────────────────────────────────────────────── */}
+      <section className="space-y-2">
+        <p className="text-xs tracking-[0.2em] uppercase text-brown font-light px-1">สำรวจ</p>
+        <div className="grid grid-cols-2 gap-2">
+          {[
+            { href: '/growth',  label: 'การเติบโต' },
+            { href: '/memory',  label: 'ความทรงจำ' },
+            { href: '/profile', label: 'โปรไฟล์' },
+            { href: '/settings', label: 'ตั้งค่า' },
+          ].map(({ href, label }) => (
+            <Link
+              key={href}
+              href={href}
+              className="rounded-2xl border border-sand/60 bg-white/15 px-4 py-3.5 text-sm font-light text-muted hover:text-ink hover:bg-white/40 transition-colors"
             >
               {label}
             </Link>
