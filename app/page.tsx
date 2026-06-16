@@ -2,7 +2,18 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 
-export default async function LandingPage() {
+export default async function LandingPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
+  const params = await searchParams;
+
+  // Supabase redirects here when magic link is invalid/expired
+  if (params.error_code) {
+    redirect(`/login?error=${encodeURIComponent(String(params.error_description ?? params.error ?? "เกิดข้อผิดพลาด"))}`);
+  }
+
   const supabase = await createClient();
   const {
     data: { user },
