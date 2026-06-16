@@ -8,7 +8,7 @@ export default async function LoginPage({
 }) {
   const params = await searchParams;
   const sent = params.sent === "1";
-  const errorMsg = typeof params.error === "string" ? decodeURIComponent(params.error) : params.error ? "เกิดข้อผิดพลาด" : null;
+  const errorMsg = params.error ? "เกิดข้อผิดพลาด กรุณาลองใหม่" : null;
 
   if (sent) {
     return <ConfirmationView />;
