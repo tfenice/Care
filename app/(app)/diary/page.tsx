@@ -31,11 +31,15 @@ export default async function DiaryPage() {
   const sevenDaysAgo = new Date(now.getTime() - 7 * 86_400_000)
   const sevenDaysAgoBK = toBK(sevenDaysAgo.toISOString())
 
-  // Build milestone date windows for On This Day
+  // Each milestone window spans ±2 days around the exact date
+  // so a journal written slightly before or after the milestone is still surfaced.
   const milestoneWindows = MILESTONES.map(m => {
-    const d = new Date(now.getTime() - m.daysAgo * 86_400_000)
-    const date = toBK(d.toISOString())
-    return { daysAgo: m.daysAgo, date }
+    const exactMs = now.getTime() - m.daysAgo * 86_400_000
+    return {
+      daysAgo: m.daysAgo,
+      startDate: toBK(new Date(exactMs - 2 * 86_400_000).toISOString()),
+      endDate:   toBK(new Date(exactMs + 2 * 86_400_000).toISOString()),
+    }
   })
 
   const [
@@ -46,7 +50,6 @@ export default async function DiaryPage() {
     m30Result,
     m90Result,
     m180Result,
-    m365Result,
   ] = await Promise.all([
     supabase.from('profiles')
       .select('current_streak')
@@ -77,14 +80,14 @@ export default async function DiaryPage() {
       .order('created_at', { ascending: false })
       .limit(7),
 
-    // On This Day — one query per milestone date
+    // On This Day — one query per milestone, ±2 day window, most recent within range
     ...milestoneWindows.map(m =>
       supabase.from('journal_entries')
         .select('body')
         .eq('user_id', user.id)
         .is('deleted_at', null)
-        .gte('created_at', `${m.date}T00:00:00+07:00`)
-        .lte('created_at', `${m.date}T23:59:59+07:00`)
+        .gte('created_at', `${m.startDate}T00:00:00+07:00`)
+        .lte('created_at', `${m.endDate}T23:59:59+07:00`)
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle()
@@ -112,10 +115,9 @@ export default async function DiaryPage() {
   const dateRange = thaiDateRange(sevenDaysAgoBK, todayBK)
 
   // ── On This Day ──────────────────────────────────────────────────────────────
-  const milestoneResults = [m30Result, m90Result, m180Result, m365Result]
   const milestoneEntries = milestoneWindows.map((m, i) => ({
     daysAgo: m.daysAgo,
-    body: milestoneResults[i].data?.body ?? null,
+    body: [m30Result, m90Result, m180Result][i].data?.body ?? null,
   }))
   const dayMemories = getOnThisDay(milestoneEntries)
 
@@ -127,10 +129,8 @@ export default async function DiaryPage() {
       {missYou.shouldShow && (
         <SurfaceCard className="space-y-2 bg-white/60">
           <p className="text-xs tracking-[0.2em] uppercase text-brown font-light">ยินดีต้อนรับกลับมา</p>
-          <p className="text-base font-light text-ink leading-8">{missYou.message}</p>
-          {missYou.sub && (
-            <p className="text-xs text-muted font-light">{missYou.sub}</p>
-          )}
+          <p className="text-sm font-light text-ink leading-8">{missYou.line1}</p>
+          <p className="text-sm font-light text-muted leading-8">{missYou.line2}</p>
         </SurfaceCard>
       )}
 
@@ -153,37 +153,46 @@ export default async function DiaryPage() {
       </SurfaceCard>
 
       {/* ── On This Day ──────────────────────────────────────────────────────── */}
-      {dayMemories.length > 0 && (
-        <div className="space-y-4">
-          <p className="text-xs tracking-[0.2em] uppercase text-brown font-light px-1">
-            วันนี้เมื่อ...
-          </p>
-          {dayMemories.map(memory => (
+      <div className="space-y-4">
+        <div className="space-y-1 px-1">
+          <p className="text-xs tracking-[0.2em] uppercase text-brown font-light">วันนี้เมื่อก่อน</p>
+          {dayMemories.length > 0 && (
+            <p className="text-xs text-muted font-light leading-6">
+              มีบางข้อความจากวันเก่า ๆ ที่ยังอยากกลับมาทักคุณเบา ๆ
+            </p>
+          )}
+        </div>
+
+        {dayMemories.length > 0 ? (
+          dayMemories.map(memory => (
             <SurfaceCard key={memory.daysAgo} className="space-y-3">
-              <p className="text-xs text-muted font-light">{memory.label}</p>
-              <p className="text-sm font-light text-ink leading-8">
+              {/* Header: specific day count, feels like a date on an old note */}
+              <p className="text-xs text-brown font-light tracking-wide">
+                วันนี้เมื่อ {memory.daysAgo} วันก่อน
+              </p>
+              {/* Excerpt: italic to evoke the feel of a handwritten page */}
+              <p className="text-sm font-light text-ink leading-8 italic">
                 &ldquo;{memory.excerpt}&rdquo;
               </p>
               <Link
-                href="/journal"
+                href="/history"
                 className="inline-block text-xs text-brown underline underline-offset-4 hover:opacity-70 transition-opacity"
               >
-                เขียนวันนี้
+                อ่านบันทึกนี้
               </Link>
             </SurfaceCard>
-          ))}
-        </div>
-      )}
-
-      {dayMemories.length === 0 && (
-        <section className="rounded-3xl border border-sand bg-white/40 px-6 py-10 text-center space-y-3">
-          <p className="text-sm font-light text-ink">ยังไม่มีความทรงจำจากวันนี้ในอดีต</p>
-          <p className="text-xs text-muted font-light leading-7">
-            เมื่อคุณใช้ Care ต่อเนื่อง<br />
-            Care จะนำความทรงจำเก่ากลับมาให้นะ
-          </p>
-        </section>
-      )}
+          ))
+        ) : (
+          <SurfaceCard className="text-center space-y-3 py-8">
+            <p className="text-sm font-light text-ink">
+              วันนี้ยังไม่มีบันทึกเก่าให้ย้อนกลับไปหา
+            </p>
+            <p className="text-xs text-muted font-light leading-7">
+              ไม่เป็นไร บางวันก็เป็นเพียงวันที่เราอยู่ตรงนี้
+            </p>
+          </SurfaceCard>
+        )}
+      </div>
 
       {/* ── Nav footer ───────────────────────────────────────────────────────── */}
       <div className="flex justify-center gap-6">

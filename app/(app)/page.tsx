@@ -171,10 +171,8 @@ export default async function HomePage() {
       {missYou.shouldShow && (
         <section className="rounded-3xl border border-sand bg-white/60 px-6 py-5 space-y-1.5">
           <p className="text-xs tracking-[0.2em] uppercase text-brown font-light">ยินดีต้อนรับกลับมา</p>
-          <p className="text-sm font-light text-ink leading-8">{missYou.message}</p>
-          {missYou.sub && (
-            <p className="text-xs text-muted font-light">{missYou.sub}</p>
-          )}
+          <p className="text-sm font-light text-ink leading-8">{missYou.line1}</p>
+          <p className="text-sm font-light text-muted leading-8">{missYou.line2}</p>
         </section>
       )}
 

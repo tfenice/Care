@@ -1,18 +1,24 @@
 // Pure function — no async, no Supabase.
 // Pass Bangkok calendar dates (YYYY-MM-DD) computed by the caller.
+//
+// Tone contract:
+//   ✓ Presence  — "เราก็ยังอยู่ตรงนี้"
+//   ✓ Welcome   — "พื้นที่ตรงนี้ยังเป็นของคุณเสมอ"
+//   ✓ Patience  — "ค่อย ๆ กลับมาเมื่อพร้อมก็ได้"
+//   ✗ Never guilt ("คุณหายไป", "อย่าลืม", "กลับมาเช็คอิน")
 
 export type MissYouResult = {
   shouldShow: boolean
   daysAway: number
-  message: string
-  sub: string
+  line1: string   // quiet observation or acknowledgment
+  line2: string   // welcome / presence / patience
 }
 
 export function getMissYouState(
   lastCheckinISO: string | null,
   todayISO: string,
 ): MissYouResult {
-  const none = { shouldShow: false, daysAway: 0, message: '', sub: '' }
+  const none: MissYouResult = { shouldShow: false, daysAway: 0, line1: '', line2: '' }
   if (!lastCheckinISO) return none
 
   // Both strings are YYYY-MM-DD Bangkok dates; treat as UTC midnight for diff
@@ -22,18 +28,19 @@ export function getMissYouState(
 
   if (daysAway < 3) return { ...none, daysAway }
 
-  let message: string
-  let sub: string
+  let line1: string
+  let line2: string
+
   if (daysAway >= 14) {
-    message = 'ไม่ว่าจะนานแค่ไหน Care ยังรอคุณอยู่เสมอ'
-    sub = 'ยินดีต้อนรับกลับมานะ'
+    line1 = 'เวลาผ่านไปพอสมควรแล้ว'
+    line2 = 'แต่พื้นที่ตรงนี้ยังเป็นของคุณเสมอ'
   } else if (daysAway >= 7) {
-    message = 'ผ่านมาสักพักแล้ว ยินดีต้อนรับกลับมาค่ะ'
-    sub = `ห่างกันไป ${daysAway} วัน`
+    line1 = 'ดูเหมือนช่วงนี้จะมีหลายอย่างเกิดขึ้น'
+    line2 = 'ไม่เป็นไรนะ ค่อย ๆ กลับมาเมื่อพร้อมก็ได้'
   } else {
-    message = 'อยากให้รู้ว่า Care คิดถึงคุณนะ'
-    sub = `ห่างกันไป ${daysAway} วัน`
+    line1 = 'ไม่เห็นคุณมาสักพักแล้วนะ'
+    line2 = 'วันนี้ถ้าอยากเล่าอะไร เราก็ยังอยู่ตรงนี้'
   }
 
-  return { shouldShow: true, daysAway, message, sub }
+  return { shouldShow: true, daysAway, line1, line2 }
 }

@@ -5,7 +5,6 @@ export const MILESTONES = [
   { daysAgo: 30,  label: '1 เดือนที่แล้ว' },
   { daysAgo: 90,  label: '3 เดือนที่แล้ว' },
   { daysAgo: 180, label: '6 เดือนที่แล้ว' },
-  { daysAgo: 365, label: '1 ปีที่แล้ว' },
 ] as const
 
 export type Milestone = typeof MILESTONES[number]
@@ -31,7 +30,7 @@ export function getOnThisDay(entries: MilestoneEntry[]): DayMemory[] {
     .map(e => ({
       daysAgo: e.daysAgo,
       label: labelMap[e.daysAgo] ?? `${e.daysAgo} วันที่แล้ว`,
-      excerpt: excerptText(e.body!, 130),
+      excerpt: excerptText(e.body!, 80),
     }))
 }
 
