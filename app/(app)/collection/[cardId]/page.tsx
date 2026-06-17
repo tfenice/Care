@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { getCategoryToken } from '@/lib/card-tokens'
-import { CategorySymbol } from '@/components/care/card-symbols'
+import { CardSignature } from '@/components/care/CardSignature'
 import CardFace from '@/components/care/CardFace'
 import PageShell from '@/components/ui/PageShell'
 
@@ -51,16 +51,21 @@ export default async function CollectionCardPage({
       .order('read_at', { ascending: true }),
   ])
 
-  if (!cardResult.data) redirect('/collection')
+  if (cardResult.error || !cardResult.data) redirect('/collection')
 
   const card = cardResult.data as unknown as CardDetail
-  const history = historyResult.data ?? []
+
+  if (historyResult.error) {
+    console.error('[CollectionCardPage] reading_history query failed:', historyResult.error.message)
+  }
+
+  const history = historyResult.error ? [] : (historyResult.data ?? [])
   const seen = history.length > 0
   const count = history.length
   const firstSeen = history[0]?.read_at ?? null
   const lastSeen  = history[history.length - 1]?.read_at ?? null
 
-  const category = card.card_categories?.name_th ?? ''
+  const category = card.card_categories?.name_th ?? 'ไม่ทราบหมวด'
   const token = getCategoryToken(category)
   const code = `${token.code}-${String(card.sort_order).padStart(2, '0')}`
 
@@ -72,6 +77,12 @@ export default async function CollectionCardPage({
       >
         ← ที่เก็บการ์ด
       </Link>
+
+      {historyResult.error && (
+        <p className="text-xs text-muted font-light">
+          ไม่สามารถโหลดประวัติการพบกันได้ · ข้อมูลอาจไม่ครบ
+        </p>
+      )}
 
       {seen ? (
         <>
@@ -109,7 +120,7 @@ export default async function CollectionCardPage({
         /* Unseen state — show presence without content */
         <div className="flex flex-col items-center justify-center gap-8 py-16 text-center">
           <div style={{ color: token.color, opacity: 0.25 }}>
-            <CategorySymbol category={category} size="lg" />
+            <CardSignature code={code} category={category} size="lg" />
           </div>
           <div className="space-y-3">
             <p

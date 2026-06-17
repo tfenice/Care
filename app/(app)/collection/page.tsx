@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { getCategoryToken } from '@/lib/card-tokens'
 import { CategorySymbol } from '@/components/care/card-symbols'
+import { CardSignature } from '@/components/care/CardSignature'
 import PageShell from '@/components/ui/PageShell'
 import PageHeader from '@/components/ui/PageHeader'
 
@@ -34,8 +35,12 @@ type Section = {
 
 function CollectionTile({ card }: { card: CardEntry }) {
   const token = getCategoryToken(card.categoryName)
+  const seenLabel = card.seen ? 'เคยพบแล้ว' : 'ยังไม่เคยพบ'
   return (
-    <Link href={`/collection/${card.id}`} aria-label={card.code}>
+    <Link
+      href={`/collection/${card.id}`}
+      aria-label={`${card.code} ${card.categoryName} ${seenLabel}`}
+    >
       <div
         className="aspect-square rounded-2xl flex flex-col items-center justify-center gap-1 transition-opacity hover:opacity-75"
         style={card.seen ? {
@@ -47,7 +52,7 @@ function CollectionTile({ card }: { card: CardEntry }) {
         }}
       >
         <div style={{ color: card.seen ? token.color : 'rgba(139,111,78,0.22)' }}>
-          <CategorySymbol category={card.categoryName} size="md" />
+          <CardSignature code={card.code} category={card.categoryName} size="md" />
         </div>
         <span
           className="text-[9px] tracking-[0.15em] font-light"
@@ -76,7 +81,27 @@ export default async function CollectionPage() {
       .eq('user_id', user.id),
   ])
 
-  const seenCardIds = new Set((historyResult.data ?? []).map(r => r.card_id))
+  if (cardsResult.error) {
+    return (
+      <PageShell className="space-y-10">
+        <PageHeader title="ที่เก็บการ์ด" />
+        <div className="text-center space-y-3 py-16">
+          <p className="text-sm font-light text-ink">ไม่สามารถโหลดที่เก็บได้</p>
+          <p className="text-xs font-light text-muted">ลองอีกครั้งในภายหลัง</p>
+        </div>
+      </PageShell>
+    )
+  }
+
+  if (historyResult.error) {
+    console.error('[CollectionPage] reading_history query failed:', historyResult.error.message)
+  }
+
+  const seenCardIds = new Set(
+    historyResult.error
+      ? []
+      : (historyResult.data ?? []).map(r => r.card_id)
+  )
 
   // Sort by category sort_order, then card sort_order
   const rawCards = (cardsResult.data ?? []) as unknown as RawCard[]
@@ -123,6 +148,12 @@ export default async function CollectionPage() {
         title="ที่เก็บการ์ด"
         subtitle={subtitle}
       />
+
+      {historyResult.error && (
+        <p className="text-xs text-muted font-light text-center">
+          ไม่สามารถโหลดประวัติการอ่านได้ · ข้อมูลอาจไม่ครบ
+        </p>
+      )}
 
       {sections.map(section => {
         const token = getCategoryToken(section.name_th)

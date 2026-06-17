@@ -31,6 +31,28 @@ export default async function CardsPage({
   const params = await searchParams
   const drawn = params.drawn === '1'
 
+  // ── Error state: draw failed (card not persisted) ─────────────────────────
+  if (params.error === 'draw') {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-6">
+        <div className="max-w-md w-full text-center space-y-10">
+          <div className="space-y-4">
+            <p className="text-sm tracking-[0.25em] uppercase text-brown font-light">CARE</p>
+            <h1 className="text-xl font-semibold text-ink leading-relaxed">
+              การ์ดยังไม่ได้ถูกบันทึก
+            </h1>
+            <p className="text-muted font-light leading-8">
+              ลองเลือกใหม่อีกครั้งได้เลย
+            </p>
+          </div>
+          <PrimaryButton href="/cards">
+            ลองใหม่
+          </PrimaryButton>
+        </div>
+      </div>
+    )
+  }
+
   // ── State B: card already drawn — show the reveal ──────────────────────────
   if (drawn) {
     const rawId = typeof params.card === 'string' ? params.card : null

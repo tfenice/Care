@@ -32,10 +32,10 @@ export async function drawCard() {
   })
 
   if (historyError) {
-    // Non-fatal: the card was selected and the user experience continues.
-    // The reading_history row is missing for this draw — card deduplication
-    // will have a gap, but the user still sees their card.
+    // Treat as fatal: the card is not persisted, so we must not reveal it.
+    // The user can retry immediately and will see their card once it saves.
     console.error('[drawCard] reading_history insert failed:', historyError.message)
+    redirect('/cards?error=draw')
   }
 
   redirect(`/cards?drawn=1&card=${picked.id}`)

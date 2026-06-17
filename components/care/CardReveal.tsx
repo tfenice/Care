@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import CardBack from './CardBack'
 import { getCategoryToken, categoryPillStyle, categoryAccentStyle } from '@/lib/card-tokens'
 import { CategorySymbol } from '@/components/care/card-symbols'
+import { CardSignature } from '@/components/care/CardSignature'
 import PrimaryButton from '@/components/ui/PrimaryButton'
 
 type Phase = 'back' | 'fading' | 'face'
@@ -91,7 +92,7 @@ export default function CardReveal({ category, titleTh, bodyTh, reflectionPrompt
           aria-hidden="true"
           style={{ color: token.color, opacity: 0.06 }}
         >
-          <CategorySymbol category={category} size="watermark" />
+          <CardSignature code={code} category={category} size="watermark" />
         </div>
 
         {/* Card content */}

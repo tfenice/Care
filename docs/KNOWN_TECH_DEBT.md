@@ -50,6 +50,11 @@ Items in **Critical** and **High** must be resolved before a public beta.
 
 ## Medium (fix before retention features)
 
+### COLL-01 — Collection depends on reading_history with 60-day retention
+**Impact:** The card collection (seen/unseen state and encounter history) is derived entirely from `reading_history`. If rows are purged after 60 days, long-term users will silently "lose" cards they have seen — the collection will revert them to unseen with no encounter record.
+**Scope:** `app/(app)/collection/page.tsx`, `app/(app)/collection/[cardId]/page.tsx`
+**Fix:** Introduce a separate `card_encounters` summary table that tracks `(user_id, card_id, first_seen_at, last_seen_at, count)`. Increment it on each card draw (inside `drawCard`). The collection UI reads from `card_encounters` instead of raw `reading_history` rows. The `reading_history` table can then be pruned for analytics/deduplication use only.
+
 ### TYPE-01 — Database types are hand-maintained
 **Impact:** `types/database.ts` is hand-written. When the Supabase CLI is set up (`supabase gen types typescript`), it will overwrite the file and the hand-written blocks (including `weekly_reflections` and the `Functions` entry for `update_streak_after_checkin`) must be re-added.
 **Files:** `types/database.ts`
@@ -87,5 +92,5 @@ No backend implementation. Users cannot currently delete or export their data. C
 | Item | Resolution |
 |---|---|
 | DATA-01 — Profile page demo data | Profile page now uses real Supabase queries (email, streak, counts, member since). |
-| DATA-02 — Card draw not persisted | `drawCard()` inserts into `reading_history` with error logging. Resolved in launch hardening sprint. |
+| DATA-02 — Card draw not persisted | `drawCard()` inserts into `reading_history`. If insert fails, redirect to `?error=draw` — card is never revealed without a persisted record. |
 | UI-04 — Profile email shows demo value | Profile page now reads `user.email` from the auth session. |
