@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import CardBack from './CardBack'
 import { getCategoryToken, categoryPillStyle, categoryAccentStyle } from '@/lib/card-tokens'
+import { CategorySymbol } from '@/components/care/card-symbols'
 import PrimaryButton from '@/components/ui/PrimaryButton'
 
 type Phase = 'back' | 'fading' | 'face'
@@ -12,11 +13,13 @@ type Props = {
   titleTh: string
   bodyTh: string
   reflectionPromptTh?: string | null
+  sortOrder?: number
 }
 
-export default function CardReveal({ category, titleTh, bodyTh, reflectionPromptTh }: Props) {
+export default function CardReveal({ category, titleTh, bodyTh, reflectionPromptTh, sortOrder }: Props) {
   const [phase, setPhase] = useState<Phase>('back')
   const token = getCategoryToken(category)
+  const code = sortOrder ? `${token.code}-${String(sortOrder).padStart(2, '0')}` : null
 
   useEffect(() => {
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -31,7 +34,6 @@ export default function CardReveal({ category, titleTh, bodyTh, reflectionPrompt
     return () => { clearTimeout(t1); clearTimeout(t2) }
   }, [])
 
-  // Pause + fade-out of card back
   if (phase !== 'face') {
     return (
       <div className="flex items-center justify-center py-8">
@@ -51,50 +53,107 @@ export default function CardReveal({ category, titleTh, bodyTh, reflectionPrompt
     )
   }
 
-  // Staggered face reveal
-  const hasReflection = !!reflectionPromptTh
-  const actionDelay = hasReflection ? '600ms' : '450ms'
+  // Staggered face reveal — timing tracks section count
+  const footerDelay = reflectionPromptTh ? '550ms' : '400ms'
+  const actionDelay = code
+    ? (reflectionPromptTh ? '700ms' : '550ms')
+    : (reflectionPromptTh ? '600ms' : '450ms')
 
   return (
     <div className="space-y-10">
       <div
-        className="rounded-3xl border border-sand px-8 py-12 space-y-8"
+        className="relative rounded-3xl border border-sand overflow-hidden"
         style={{
           background: 'linear-gradient(160deg, #FFFFFF 0%, rgba(247,242,235,0.9) 100%)',
-          boxShadow: '0 12px 48px rgba(139,111,78,0.1), 0 2px 8px rgba(139,111,78,0.06)',
+          boxShadow: '0 16px 48px rgba(139,111,78,0.12), 0 2px 8px rgba(139,111,78,0.06)',
         }}
       >
-        <span
-          className="care-section-in inline-flex items-center text-xs tracking-[0.2em] uppercase font-light rounded-full px-3 py-1"
-          style={{ ...categoryPillStyle(token), animationDelay: '0ms' }}
-        >
-          {category}
-        </span>
+        {/* Paper grain */}
+        <div
+          className="absolute inset-0 pointer-events-none select-none"
+          aria-hidden="true"
+          style={{
+            backgroundImage: 'radial-gradient(circle, rgba(139,111,78,0.1) 0.5px, transparent 0.5px)',
+            backgroundSize: '5px 5px',
+          }}
+        />
 
-        <h2
-          className="care-section-in text-3xl font-semibold text-ink leading-relaxed"
-          style={{ animationDelay: '150ms' }}
-        >
-          {titleTh}
-        </h2>
+        {/* Inner frame */}
+        <div
+          className="absolute inset-2 rounded-[20px] pointer-events-none select-none"
+          aria-hidden="true"
+          style={{ border: '1px solid rgba(201,169,122,0.18)' }}
+        />
 
-        <p
-          className="care-section-in text-ink font-light leading-9 text-lg"
-          style={{ animationDelay: '300ms' }}
+        {/* Watermark motif */}
+        <div
+          className="absolute inset-0 flex items-center justify-center pointer-events-none select-none"
+          aria-hidden="true"
+          style={{ color: token.color, opacity: 0.06 }}
         >
-          {bodyTh}
-        </p>
+          <CategorySymbol category={category} size="watermark" />
+        </div>
 
-        {reflectionPromptTh && (
+        {/* Card content */}
+        <div className="relative px-8 pt-10 pb-8 space-y-8">
+          {/* Category header: pill + separator — fade in as one unit */}
           <div
-            className="care-section-in border-l-2 pl-5 pt-1"
-            style={{ ...categoryAccentStyle(token), animationDelay: '450ms' }}
+            className="care-section-in space-y-5"
+            style={{ animationDelay: '0ms' }}
           >
-            <p className="text-sm text-muted font-light leading-8">
-              {reflectionPromptTh}
-            </p>
+            <span
+              className="inline-flex items-center gap-1.5 text-xs tracking-[0.2em] uppercase font-light rounded-full px-3 py-1"
+              style={categoryPillStyle(token)}
+            >
+              <CategorySymbol category={category} size="sm" />
+              {category}
+            </span>
+            <div style={{ borderTop: `1px solid rgb(${token.rgb} / 0.12)` }} />
           </div>
-        )}
+
+          <h2
+            className="care-section-in text-3xl font-semibold text-ink leading-relaxed"
+            style={{ animationDelay: '150ms' }}
+          >
+            {titleTh}
+          </h2>
+
+          <p
+            className="care-section-in text-ink font-light leading-9 text-lg"
+            style={{ animationDelay: '300ms' }}
+          >
+            {bodyTh}
+          </p>
+
+          {reflectionPromptTh && (
+            <div
+              className="care-section-in border-l-2 pl-5 pt-1"
+              style={{ ...categoryAccentStyle(token), animationDelay: '450ms' }}
+            >
+              <p className="text-sm text-muted font-light leading-8">
+                {reflectionPromptTh}
+              </p>
+            </div>
+          )}
+
+          {/* Collection footer */}
+          {code && (
+            <div
+              className="care-section-in border-t pt-4"
+              style={{
+                borderColor: `rgb(${token.rgb} / 0.12)`,
+                animationDelay: footerDelay,
+              }}
+            >
+              <span
+                className="text-[10px] tracking-[0.25em] font-light"
+                style={{ color: `rgb(${token.rgb} / 0.45)` }}
+              >
+                {code} • {category}
+              </span>
+            </div>
+          )}
+        </div>
       </div>
 
       <div

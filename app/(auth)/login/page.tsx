@@ -4,16 +4,12 @@ import { signIn } from "@/lib/actions/auth";
 import { createClient } from "@/lib/supabase/server";
 import EntryWhisper from "@/components/care/EntryWhisper";
 
-// Map raw internal error codes to friendly Thai messages.
-// Raw codes are never shown to the user.
+// Map opaque error codes (from auth.ts) to friendly Thai messages.
+// Raw error details are logged server-side only — never put in URLs.
 function toUserMessage(raw: string | null): string | null {
   if (!raw) return null
-  if (raw.startsWith('SEND:') || raw.startsWith('SEND_THROW:')) {
-    return 'ส่งลิงก์ไม่ได้ในขณะนี้ ลองอีกครั้งสักครู่'
-  }
-  if (raw === 'missing_site_url') {
-    return 'การตั้งค่าระบบผิดพลาด กรุณาติดต่อผู้ดูแล'
-  }
+  if (raw === 'send_failed') return 'ส่งลิงก์ไม่ได้ในขณะนี้ ลองอีกครั้งสักครู่'
+  if (raw === 'config')      return 'การตั้งค่าระบบผิดพลาด กรุณาติดต่อผู้ดูแล'
   return 'มีบางอย่างผิดพลาด ลองอีกครั้งได้นะ'
 }
 

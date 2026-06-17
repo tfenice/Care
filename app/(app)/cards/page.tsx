@@ -11,6 +11,7 @@ type DrawnCard = {
   title_th: string
   body_th: string
   reflection_prompt_th: string | null
+  sort_order: number
   card_categories: { name_th: string } | null
 }
 
@@ -38,7 +39,7 @@ export default async function CardsPage({
 
     const { data } = await supabase
       .from('ritual_cards')
-      .select('title_th, body_th, reflection_prompt_th, card_categories(name_th)')
+      .select('title_th, body_th, reflection_prompt_th, sort_order, card_categories(name_th)')
       .eq('id', cardId)
       .eq('is_active', true)
       .maybeSingle()
@@ -56,6 +57,7 @@ export default async function CardsPage({
             titleTh={card.title_th}
             bodyTh={card.body_th}
             reflectionPromptTh={card.reflection_prompt_th}
+            sortOrder={card.sort_order}
           />
         </div>
       </div>

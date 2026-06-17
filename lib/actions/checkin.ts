@@ -20,5 +20,18 @@ export async function submitCheckin(formData: FormData) {
 
   if (error) redirect('/checkin?error=save')
 
+  // Update streak via SECURITY DEFINER function — bypasses the removed profile
+  // UPDATE policy while still running trusted server-side logic.
+  const todayBK = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Bangkok' }).format(new Date())
+  const { error: streakError } = await supabase.rpc('update_streak_after_checkin', {
+    p_user_id: user.id,
+    p_today:   todayBK,
+  })
+  if (streakError) {
+    // Non-fatal: the checkin was saved. Streak will self-correct on the next
+    // successful checkin. Log for debugging in Vercel function logs.
+    console.error('[checkin] streak update failed:', streakError.message)
+  }
+
   redirect('/cards')
 }

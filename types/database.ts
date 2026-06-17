@@ -247,7 +247,12 @@ export interface Database {
       }
     }
     Views: Record<string, never>
-    Functions: Record<string, never>
+    Functions: {
+      update_streak_after_checkin: {
+        Args: { p_user_id: string; p_today: string }
+        Returns: undefined
+      }
+    }
     Enums: Record<string, never>
   }
 }

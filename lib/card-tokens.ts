@@ -5,6 +5,7 @@ import type { CSSProperties } from 'react'
 
 export type CategoryToken = {
   slug: string
+  code: string     // A, P, H, G — used for card reference codes (A-01, P-03, etc.)
   color: string    // CSS variable — for inline color values
   rgb: string      // CSS variable — for rgb(var(...) / alpha) composition
   feeling: string  // internal descriptor, not shown in UI
@@ -13,24 +14,28 @@ export type CategoryToken = {
 export const CATEGORY_TOKENS: Record<string, CategoryToken> = {
   'การยอมรับ': {
     slug: 'acceptance',
+    code: 'A',
     color: 'var(--color-acceptance)',
     rgb: 'var(--color-acceptance-rgb)',
     feeling: 'stillness',
   },
   'ความใจจดจ่อ': {
     slug: 'presence',
+    code: 'P',
     color: 'var(--color-presence)',
     rgb: 'var(--color-presence-rgb)',
     feeling: 'attention',
   },
   'ความหวัง': {
     slug: 'hope',
+    code: 'H',
     color: 'var(--color-hope)',
     rgb: 'var(--color-hope-rgb)',
     feeling: 'possibility',
   },
   'การเติบโต': {
     slug: 'growth',
+    code: 'G',
     color: 'var(--color-brown)',
     rgb: 'var(--color-growth-rgb)',
     feeling: 'becoming',
@@ -40,6 +45,7 @@ export const CATEGORY_TOKENS: Record<string, CategoryToken> = {
 // Fallback token — used when category name is unrecognised or absent
 const DEFAULT_TOKEN: CategoryToken = {
   slug: 'care',
+  code: 'C',
   color: 'var(--color-brown)',
   rgb: 'var(--color-growth-rgb)',
   feeling: 'reflection',

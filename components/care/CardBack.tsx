@@ -12,7 +12,7 @@ export default function CardBack({ className = '', size = 'sm', animate = false 
 
   return (
     <div
-      className={`relative rounded-2xl overflow-hidden select-none ${animate ? 'care-back-breathe' : ''} ${className}`}
+      className={`relative overflow-hidden select-none ${size === 'lg' ? 'rounded-3xl' : 'rounded-2xl'} ${animate ? 'care-back-breathe' : ''} ${className}`}
       style={{
         background: 'linear-gradient(135deg, #EDE0CD 0%, #E5D4B8 55%, #D4BA93 100%)',
         boxShadow: size === 'lg'
