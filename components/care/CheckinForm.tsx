@@ -49,7 +49,7 @@ export default function CheckinForm({ hasError }: { hasError: boolean }) {
       />
 
       {hasError && (
-        <p className="text-sm text-error text-center">เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง</p>
+        <p className="text-sm text-error text-center">มีบางอย่างผิดพลาด ลองอีกครั้งได้นะ</p>
       )}
 
       <SubmitButton disabled={!selected} />

@@ -61,15 +61,16 @@ export default async function MemoryPage() {
       </header>
 
       {!hasData ? (
-        <section className="rounded-3xl border border-sand bg-white/40 px-6 py-12 text-center space-y-4">
-          <p className="text-3xl select-none">🌱</p>
+        <section className="rounded-3xl border border-sand bg-white/40 px-6 py-12 text-center space-y-5">
           <p className="text-ink font-light text-sm leading-8">
-            ยังไม่มีความทรงจำ<br />
-            เขียนบันทึกและเช็คอินต่อไปเรื่อยๆ<br />
-            Care จะเริ่มสังเกตเห็นรูปแบบของคุณ
+            Care ยังไม่เห็นรูปแบบที่ชัดเจน
+          </p>
+          <p className="text-muted font-light text-sm leading-7">
+            เมื่อคุณกลับมาบ่อยขึ้น<br />
+            Care จะเริ่มสังเกตเห็นสิ่งที่ซ้ำๆ ในตัวคุณ
           </p>
           <Link href="/journal" className="inline-block text-sm text-brown underline underline-offset-4 hover:opacity-70 transition-opacity">
-            เขียนบันทึกตอนนี้
+            เขียนบันทึก
           </Link>
         </section>
       ) : (

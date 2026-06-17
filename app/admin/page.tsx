@@ -1,11 +1,11 @@
-// PROTOTYPE — founder-internal only. All data is demo-only.
-// Replace with service-role Supabase queries in Launch Hardening Sprint.
-// This route must be gated to the founder email before any public deploy.
+// Founder-internal analytics. All data is demo-only until Launch Hardening Sprint.
 //
 // SAFETY: This file must remain a Server Component (no "use client").
 // Never import admin queries or service-role credentials into Client Components —
 // doing so would bundle them into the browser bundle. See ADMIN-01 in KNOWN_TECH_DEBT.md.
 
+import { redirect } from 'next/navigation'
+import { createClient } from '@/lib/supabase/server'
 import { DEMO_OVERVIEW, DEMO_DAILY_STATS } from '@/lib/demo/admin'
 
 function StatCard({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
@@ -19,6 +19,10 @@ function StatCard({ label, value, sub }: { label: string; value: string | number
 }
 
 export default async function AdminPage() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user || user.email !== process.env.FOUNDER_EMAIL) redirect('/checkin')
+
   const overview   = DEMO_OVERVIEW
   const dailyStats = DEMO_DAILY_STATS
 

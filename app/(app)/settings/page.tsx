@@ -22,7 +22,7 @@ export default function SettingsPage() {
           {[
             'อีเมลสำหรับเข้าระบบเท่านั้น',
             'อารมณ์และบันทึกส่วนตัว เห็นได้เฉพาะคุณ',
-            'ไม่มีการ tracking หรือ analytics ภายนอก',
+            'ไม่มีการติดตามข้อมูลจากภายนอก',
             'ข้อมูลถูกเข้ารหัสและปลอดภัย',
           ].map(item => (
             <p key={item} className="text-xs font-light text-muted leading-7 flex items-start gap-2">
@@ -52,7 +52,7 @@ export default function SettingsPage() {
             </div>
           ))}
         </div>
-        <p className="text-xs text-muted font-light">การแจ้งเตือนจะใช้งานได้ในเวอร์ชันถัดไป</p>
+        <p className="text-xs text-muted font-light">เร็วๆ นี้</p>
       </section>
 
       {/* ── Export data (placeholder) ─────────────────────────────────────── */}
@@ -65,7 +65,7 @@ export default function SettingsPage() {
           </div>
           <span className="text-muted text-sm">→</span>
         </div>
-        <p className="text-xs text-muted font-light">ฟีเจอร์นี้กำลังพัฒนา</p>
+        <p className="text-xs text-muted font-light">เร็วๆ นี้</p>
       </section>
 
       {/* ── Delete account (placeholder) ──────────────────────────────────── */}
@@ -78,7 +78,7 @@ export default function SettingsPage() {
           </div>
           <span className="text-muted text-sm">→</span>
         </div>
-        <p className="text-xs text-muted font-light">ฟีเจอร์นี้กำลังพัฒนา กรุณาติดต่อทีมงาน</p>
+        <p className="text-xs text-muted font-light">ยังไม่พร้อมใช้งาน — หากต้องการลบบัญชีติดต่อเราได้เลย</p>
       </section>
 
       {/* ── About / Version ───────────────────────────────────────────────── */}

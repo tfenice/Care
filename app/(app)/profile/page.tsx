@@ -40,11 +40,11 @@ export default function ProfilePage() {
         <div className="grid grid-cols-2 gap-4">
           <div>
             <p className="text-3xl font-semibold text-ink leading-none">{DEMO.streak}</p>
-            <p className="text-xs text-muted font-light mt-1.5">วัน Streak ปัจจุบัน</p>
+            <p className="text-xs text-muted font-light mt-1.5">วันติดต่อกัน</p>
           </div>
           <div>
             <p className="text-3xl font-semibold text-brown leading-none">{DEMO.longest}</p>
-            <p className="text-xs text-muted font-light mt-1.5">วัน Streak สูงสุด</p>
+            <p className="text-xs text-muted font-light mt-1.5">สถิติสูงสุด</p>
           </div>
         </div>
       </section>
@@ -82,7 +82,7 @@ export default function ProfilePage() {
             </div>
           </div>
         ))}
-        <p className="text-xs text-muted font-light">การแจ้งเตือนจะใช้งานได้ในเวอร์ชันถัดไป</p>
+        <p className="text-xs text-muted font-light">เร็วๆ นี้</p>
       </section>
 
       {/* ── Links ───────────────────────────────────────────────────────────── */}

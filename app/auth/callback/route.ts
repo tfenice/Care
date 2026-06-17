@@ -6,7 +6,8 @@ export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get('code')
   const rawNext = searchParams.get('next') ?? '/checkin'
-  const next = rawNext.startsWith('/') ? rawNext : '/checkin'
+  // Reject `//evil.com` (double-slash open-redirect bypass)
+  const next = rawNext.startsWith('/') && !rawNext.startsWith('//') ? rawNext : '/checkin'
 
   if (!code) {
     return NextResponse.redirect(new URL('/login?error=no_code', origin))

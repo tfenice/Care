@@ -25,7 +25,7 @@ export async function createClient() {
             })
           } catch {
             // Silently ignore when called from a Server Component —
-            // middleware.ts handles the actual cookie refresh.
+            // proxy.ts handles the actual cookie refresh.
           }
         },
       },

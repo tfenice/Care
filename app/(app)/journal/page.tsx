@@ -9,8 +9,7 @@ export default async function JournalPage({
 }) {
   const params = await searchParams
   const saved = params.saved === '1'
-
-  // AUTH DISABLED: skip user/checkin DB checks
+  const hasError = !!params.error
 
   if (saved) {
     return (
@@ -44,7 +43,7 @@ export default async function JournalPage({
       <div className="max-w-md w-full space-y-8">
         <div className="space-y-3">
           <p className="text-sm tracking-[0.25em] uppercase text-brown font-light">CARE</p>
-          <p className="text-muted font-light text-sm leading-6">หลังจากอ่านมาถึงตรงนี้</p>
+          <p className="text-muted font-light text-sm leading-6">อยู่กับตัวเองสักครู่</p>
           <h1 className="text-2xl font-semibold text-ink leading-relaxed">
             คุณอยากบอกอะไร
             <br />
@@ -58,6 +57,9 @@ export default async function JournalPage({
             placeholder="เขียนได้เลย ไม่ต้องสมบูรณ์แบบ"
             className="w-full px-4 py-3 rounded-2xl border border-sand bg-white/60 text-ink placeholder:text-muted focus:outline-none focus:border-brown transition-colors resize-none leading-8 font-light"
           />
+          {hasError && (
+            <p className="text-sm text-error text-center">มีบางอย่างผิดพลาด ลองอีกครั้งได้นะ</p>
+          )}
           <JournalSubmitButton />
         </form>
       </div>

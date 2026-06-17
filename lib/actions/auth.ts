@@ -8,9 +8,10 @@ export async function signIn(formData: FormData) {
     .trim()
     .toLowerCase();
 
-  if (!email) {
-    redirect("/login?error=1");
-  }
+  if (!email) redirect("/login?error=1");
+
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+  if (!siteUrl) redirect("/login?error=missing_site_url");
 
   let errMsg: string | null = null;
   try {
@@ -18,7 +19,7 @@ export async function signIn(formData: FormData) {
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL ?? "https://care-eight-kappa.vercel.app"}/auth/callback`,
+        emailRedirectTo: `${siteUrl}/auth/callback`,
       },
     });
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -27,9 +28,7 @@ export async function signIn(formData: FormData) {
     errMsg = `SEND_THROW:${e instanceof Error ? `${e.name}:${e.message}` : String(e)}`;
   }
 
-  if (errMsg) {
-    redirect(`/login?error=${encodeURIComponent(errMsg)}`);
-  }
+  if (errMsg) redirect(`/login?error=${encodeURIComponent(errMsg)}`);
 
   redirect("/login?sent=1");
 }

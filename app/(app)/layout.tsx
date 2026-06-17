@@ -1,15 +1,20 @@
-import BottomNav from "@/components/care/BottomNav";
+import { redirect } from 'next/navigation'
+import { createClient } from '@/lib/supabase/server'
+import BottomNav from '@/components/care/BottomNav'
 
 export default async function AppLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: React.ReactNode
 }) {
-  // AUTH DISABLED: skip user check
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
   return (
     <div className="min-h-screen bg-cream flex flex-col">
       <main className="flex-1 pb-24">{children}</main>
       <BottomNav />
     </div>
-  );
+  )
 }

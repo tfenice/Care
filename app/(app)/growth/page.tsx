@@ -176,7 +176,7 @@ export default function GrowthPage() {
 
       {/* ── Gentle interpretation ───────────────────────────────────────────── */}
       <section className="rounded-3xl border border-sand bg-white/20 px-6 py-6">
-        <p className="text-xs tracking-[0.2em] uppercase text-brown font-light mb-3">Care บอกว่า</p>
+        <p className="text-xs tracking-[0.2em] uppercase text-brown font-light mb-3">Care สังเกตเห็น</p>
         <p className="text-sm font-light text-ink leading-8">{interpretation}</p>
       </section>
 

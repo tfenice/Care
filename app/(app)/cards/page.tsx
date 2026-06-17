@@ -10,7 +10,7 @@ export default async function CardsPage({
   const params = await searchParams
   const drawn = params.drawn === '1'
 
-  // AUTH DISABLED — State B: pause moment / draw card
+  // State A: pause moment before drawing
   if (!drawn) {
     return (
       <div className="min-h-screen flex items-center justify-center px-6">
@@ -36,7 +36,7 @@ export default async function CardsPage({
     )
   }
 
-  // AUTH DISABLED — State C: demo card
+  // State B: card revealed
   return (
     <div className="min-h-screen flex items-center justify-center px-6 py-12">
       <div className="max-w-md w-full space-y-8">
@@ -65,7 +65,7 @@ export default async function CardsPage({
             เขียนบันทึก
           </Link>
           <p className="text-center text-xs text-muted font-light">
-            ลองเขียนสิ่งที่นึกขึ้นมาหลังอ่าน
+            เขียนสิ่งที่นึกขึ้นมาก็ได้
           </p>
         </div>
       </div>

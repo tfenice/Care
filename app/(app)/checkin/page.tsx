@@ -8,8 +8,6 @@ export default async function CheckinPage({
   const params = await searchParams
   const hasError = !!params.error
 
-  // AUTH DISABLED: skip user/profile DB checks
-
   return (
     <div className="min-h-screen flex items-center justify-center px-6 py-12">
       <div className="max-w-md w-full space-y-10">
