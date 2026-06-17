@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useCallback } from "react";
+import { focusRing } from "@/components/ui/focus";
 
 interface Props {
   heading?: string;
@@ -23,10 +24,10 @@ export default function PauseMoment({
   }, [advance, durationMs]);
 
   return (
-    <div
-      className="fixed inset-0 bg-cream flex items-center justify-center cursor-pointer z-50"
+    <button
+      type="button"
+      className={`fixed inset-0 bg-cream flex items-center justify-center cursor-pointer z-50 ${focusRing}`}
       onClick={advance}
-      role="button"
       aria-label="แตะเพื่อดำเนินการต่อ"
     >
       <div className="text-center space-y-10 px-10">
@@ -41,6 +42,6 @@ export default function PauseMoment({
           {body && <p className="text-muted font-light leading-8">{body}</p>}
         </div>
       </div>
-    </div>
+    </button>
   );
 }

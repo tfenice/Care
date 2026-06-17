@@ -1,15 +1,23 @@
-// PROTOTYPE — all data is demo-only. Replace DEMO_GROWTH with user-scoped
-// Supabase queries in Launch Hardening Sprint.
-
 import Link from 'next/link'
-import { generateWeeklyReflection } from '@/lib/services/weeklyReflection'
-import { DEMO_GROWTH, DEMO_GROWTH_WEEK_JOURNALS, DEMO_GROWTH_WEEK_CARDS } from '@/lib/demo/growth'
+import { redirect } from 'next/navigation'
+import { createClient } from '@/lib/supabase/server'
+import { generateWeeklyReflection, getWeekBounds } from '@/lib/services/weeklyReflection'
+import PageShell from '@/components/ui/PageShell'
+import PageHeader from '@/components/ui/PageHeader'
+import SurfaceCard from '@/components/ui/SurfaceCard'
+import Pill from '@/components/ui/Pill'
 
 const MOOD_DOT: Record<string, string> = {
   สบายดี:  'bg-brown',
   พอไหว:   'bg-brown/50',
   เหนื่อย: 'bg-sand border border-sand',
   สับสน:   'bg-muted/30',
+}
+
+const THAI_DAY = ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'] // index 0 = Sunday
+
+function toBK(ts: string): string {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Bangkok' }).format(new Date(ts))
 }
 
 function gentleInterpretation(streak: number, dominant: string | null, checkinPct: number): string {
@@ -38,50 +46,132 @@ function gentleInterpretation(streak: number, dominant: string | null, checkinPc
   return lines.join(' ')
 }
 
-function weeklyReflectionDemo() {
-  return generateWeeklyReflection({
-    checkins: DEMO_GROWTH.last7
-      .filter(d => d.mood !== null)
-      .map(d => ({ mood_key: d.mood!, note: null })),
-    journals: DEMO_GROWTH_WEEK_JOURNALS,
-    cards:    DEMO_GROWTH_WEEK_CARDS,
-  })
-}
+export default async function GrowthPage() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
 
-export default function GrowthPage() {
-  const maxMoodCount  = Math.max(...DEMO_GROWTH.moodBreakdown.map(m => m.count))
-  const checkinPct    = DEMO_GROWTH.totalCheckins / 30
-  const dominant      = DEMO_GROWTH.moodBreakdown[0]?.mood ?? null
-  const interpretation = gentleInterpretation(DEMO_GROWTH.streak, dominant, checkinPct)
-  const weekReflect   = weeklyReflectionDemo()
+  const now        = new Date()
+  const currBounds = getWeekBounds(now)
+  // 31-day window covers Bangkok tz edge cases (UTC+7 can shift a Bangkok day into UTC tomorrow)
+  const thirtyOneDaysAgo = new Date(now.getTime() - 31 * 86_400_000).toISOString()
+
+  const [
+    profileResult,
+    checkinCountResult,
+    journalCountResult,
+    cardCountResult,
+    recentCheckinsResult,
+    weekJournalsResult,
+  ] = await Promise.all([
+    supabase.from('profiles')
+      .select('current_streak, longest_streak')
+      .eq('id', user.id)
+      .maybeSingle(),
+    supabase.from('daily_checkins')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', user.id),
+    supabase.from('journal_entries')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+      .is('deleted_at', null),
+    supabase.from('reading_history')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', user.id),
+    supabase.from('daily_checkins')
+      .select('mood_key, note, checked_in_at')
+      .eq('user_id', user.id)
+      .gte('checked_in_at', thirtyOneDaysAgo)
+      .order('checked_in_at', { ascending: false })
+      .limit(90),
+    supabase.from('journal_entries')
+      .select('body')
+      .eq('user_id', user.id)
+      .is('deleted_at', null)
+      .gte('created_at', `${currBounds.start}T00:00:00+07:00`)
+      .lte('created_at', `${currBounds.end}T23:59:59+07:00`)
+      .order('created_at', { ascending: false })
+      .limit(7),
+  ])
+
+  const streak  = profileResult.data?.current_streak ?? 0
+  const longest = profileResult.data?.longest_streak ?? 0
+  const totalCheckins = checkinCountResult.count ?? 0
+  const totalJournals = journalCountResult.count ?? 0
+  const totalCards    = cardCountResult.count ?? 0
+
+  const recentCheckins = recentCheckinsResult.data ?? []
+
+  // ── 30-day activity grid ───────────────────────────────────────────────────
+  const checkinDateSet = new Set(recentCheckins.map(c => toBK(c.checked_in_at)))
+  const last30 = Array.from({ length: 30 }, (_, i) => {
+    const d = new Date(now.getTime() - (29 - i) * 86_400_000)
+    return checkinDateSet.has(toBK(d.toISOString()))
+  })
+
+  // ── 7-day mood timeline ────────────────────────────────────────────────────
+  const moodByDate = new Map<string, string>()
+  for (const c of recentCheckins) {
+    const bkDate = toBK(c.checked_in_at)
+    if (!moodByDate.has(bkDate)) moodByDate.set(bkDate, c.mood_key)
+  }
+  const last7 = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(now.getTime() - (6 - i) * 86_400_000)
+    const bkDate = toBK(d.toISOString())
+    const dow = new Date(bkDate + 'T00:00:00Z').getUTCDay()
+    return { day: THAI_DAY[dow], mood: moodByDate.get(bkDate) ?? null }
+  })
+
+  // ── Mood breakdown (last 90 checkins) ─────────────────────────────────────
+  const moodCounts = new Map<string, number>()
+  for (const { mood_key } of recentCheckins) {
+    moodCounts.set(mood_key, (moodCounts.get(mood_key) ?? 0) + 1)
+  }
+  const moodBreakdown = Array.from(moodCounts.entries())
+    .sort((a, b) => b[1] - a[1])
+    .map(([mood, count]) => ({ mood, count }))
+
+  // ── Current week reflection ────────────────────────────────────────────────
+  const weekCheckins = recentCheckins
+    .filter(c => {
+      const bkDate = toBK(c.checked_in_at)
+      return bkDate >= currBounds.start && bkDate <= currBounds.end
+    })
+    .map(c => ({ mood_key: c.mood_key, note: c.note }))
+
+  const weekReflect = generateWeeklyReflection({
+    checkins: weekCheckins,
+    journals: weekJournalsResult.data ?? [],
+    cards: [], // reading_history not yet populated — see DATA-02
+  })
+
+  const maxMoodCount   = Math.max(...moodBreakdown.map(m => m.count), 1)
+  const checkinPct     = totalCheckins / 30
+  const dominant       = moodBreakdown[0]?.mood ?? null
+  const interpretation = gentleInterpretation(streak, dominant, checkinPct)
 
   return (
-    <div className="max-w-md mx-auto px-6 py-10 pb-32 space-y-6">
-
-      <header className="space-y-1 pt-2">
-        <p className="text-sm tracking-[0.25em] uppercase text-brown font-light">CARE</p>
-        <h1 className="text-2xl font-semibold text-ink">การเติบโต</h1>
-        <p className="text-muted font-light leading-7">การเดินทางของคุณ</p>
-      </header>
+    <PageShell className="space-y-6">
+      <PageHeader title="การเติบโต" subtitle="การเดินทางของคุณ" />
 
       {/* ── Streak + 30-day grid ─────────────────────────────────────────────── */}
-      <section className="rounded-3xl border border-sand bg-white/40 px-6 py-6 space-y-6">
+      <SurfaceCard className="space-y-6">
         <p className="text-xs tracking-[0.2em] uppercase text-brown font-light">Streak</p>
         <div className="flex justify-around">
           <div className="text-center">
-            <p className="text-4xl font-semibold text-ink">{DEMO_GROWTH.streak}</p>
+            <p className="text-4xl font-semibold text-ink">{streak}</p>
             <p className="text-xs text-muted font-light mt-1">วันปัจจุบัน</p>
           </div>
           <div className="w-px bg-sand" />
           <div className="text-center">
-            <p className="text-4xl font-semibold text-brown">{DEMO_GROWTH.longest}</p>
+            <p className="text-4xl font-semibold text-brown">{longest}</p>
             <p className="text-xs text-muted font-light mt-1">สถิติสูงสุด</p>
           </div>
         </div>
         <div>
           <p className="text-xs text-muted font-light mb-3">30 วันที่ผ่านมา</p>
           <div className="grid grid-cols-10 gap-1.5">
-            {DEMO_GROWTH.last30.map((checked, i) => (
+            {last30.map((checked, i) => (
               <div
                 key={i}
                 className={`w-full aspect-square rounded-sm ${checked ? 'bg-brown' : 'bg-sand/60'}`}
@@ -89,14 +179,14 @@ export default function GrowthPage() {
             ))}
           </div>
         </div>
-      </section>
+      </SurfaceCard>
 
       {/* ── Lifetime counters ───────────────────────────────────────────────── */}
       <div className="grid grid-cols-3 gap-3">
         {[
-          { label: 'เช็คอิน',  value: DEMO_GROWTH.totalCheckins },
-          { label: 'การ์ด',    value: DEMO_GROWTH.totalCards },
-          { label: 'บันทึก',   value: DEMO_GROWTH.totalJournals },
+          { label: 'เช็คอิน', value: totalCheckins },
+          { label: 'การ์ด',   value: totalCards },
+          { label: 'บันทึก',  value: totalJournals },
         ].map(({ label, value }) => (
           <div key={label} className="rounded-2xl border border-sand bg-white/30 px-4 py-4 text-center">
             <p className="text-2xl font-semibold text-ink">{value}</p>
@@ -106,11 +196,11 @@ export default function GrowthPage() {
       </div>
 
       {/* ── 7-day emotional timeline ────────────────────────────────────────── */}
-      <section className="rounded-3xl border border-sand bg-white/40 px-6 py-6 space-y-4">
+      <SurfaceCard className="space-y-4">
         <p className="text-xs tracking-[0.2em] uppercase text-brown font-light">7 วันล่าสุด</p>
         <div className="flex justify-between">
-          {DEMO_GROWTH.last7.map(({ day, mood }) => (
-            <div key={day} className="flex flex-col items-center gap-2">
+          {last7.map(({ day, mood }, i) => (
+            <div key={i} className="flex flex-col items-center gap-2">
               <div className={`w-7 h-7 rounded-full flex items-center justify-center ${
                 mood ? (MOOD_DOT[mood] ?? 'bg-sand') : 'bg-sand/40 border border-sand/60'
               }`}>
@@ -125,16 +215,14 @@ export default function GrowthPage() {
             </div>
           ))}
         </div>
-      </section>
+      </SurfaceCard>
 
       {/* ── Weekly reflection ───────────────────────────────────────────────── */}
-      <section className="rounded-3xl border border-sand bg-white/40 px-6 py-6 space-y-4">
+      <SurfaceCard className="space-y-4">
         <div className="flex items-center justify-between">
           <p className="text-xs tracking-[0.2em] uppercase text-brown font-light">สัปดาห์นี้</p>
           {weekReflect.dominant_mood && (
-            <span className="text-xs text-muted font-light border border-sand rounded-full px-3 py-1">
-              {weekReflect.dominant_mood}
-            </span>
+            <Pill>{weekReflect.dominant_mood}</Pill>
           )}
         </div>
         {weekReflect.mood_theme && (
@@ -151,28 +239,30 @@ export default function GrowthPage() {
             <p className="text-xs text-muted font-light">บันทึก</p>
           </div>
         </div>
-      </section>
+      </SurfaceCard>
 
       {/* ── Mood breakdown ──────────────────────────────────────────────────── */}
-      <section className="rounded-3xl border border-sand bg-white/40 px-6 py-6 space-y-4">
-        <p className="text-xs tracking-[0.2em] uppercase text-brown font-light">อารมณ์โดยรวม</p>
-        <div className="space-y-3">
-          {DEMO_GROWTH.moodBreakdown.map(({ mood, count }) => (
-            <div key={mood} className="space-y-1.5">
-              <div className="flex justify-between">
-                <span className="text-sm font-light text-ink">{mood}</span>
-                <span className="text-xs text-muted font-light">{count} วัน</span>
+      {moodBreakdown.length > 0 && (
+        <SurfaceCard className="space-y-4">
+          <p className="text-xs tracking-[0.2em] uppercase text-brown font-light">อารมณ์โดยรวม</p>
+          <div className="space-y-3">
+            {moodBreakdown.map(({ mood, count }) => (
+              <div key={mood} className="space-y-1.5">
+                <div className="flex justify-between">
+                  <span className="text-sm font-light text-ink">{mood}</span>
+                  <span className="text-xs text-muted font-light">{count} วัน</span>
+                </div>
+                <div className="h-1.5 bg-sand rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-brown/60 rounded-full"
+                    style={{ width: `${Math.round((count / maxMoodCount) * 100)}%` }}
+                  />
+                </div>
               </div>
-              <div className="h-1.5 bg-sand rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-brown/60 rounded-full"
-                  style={{ width: `${Math.round((count / maxMoodCount) * 100)}%` }}
-                />
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
+            ))}
+          </div>
+        </SurfaceCard>
+      )}
 
       {/* ── Gentle interpretation ───────────────────────────────────────────── */}
       <section className="rounded-3xl border border-sand bg-white/20 px-6 py-6">
@@ -188,7 +278,6 @@ export default function GrowthPage() {
           หน้าหลัก
         </Link>
       </div>
-
-    </div>
+    </PageShell>
   )
 }

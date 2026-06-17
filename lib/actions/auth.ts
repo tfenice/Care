@@ -13,14 +13,14 @@ export async function signIn(formData: FormData) {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
   if (!siteUrl) redirect("/login?error=missing_site_url");
 
+  const emailRedirectTo = `${siteUrl}/auth/callback?next=/checkin`;
+
   let errMsg: string | null = null;
   try {
     const supabase = await createClient();
     const { error } = await supabase.auth.signInWithOtp({
       email,
-      options: {
-        emailRedirectTo: `${siteUrl}/auth/callback`,
-      },
+      options: { emailRedirectTo },
     });
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     if (error) errMsg = `SEND:${error.name}|${(error as any).status}|${error.message}`;

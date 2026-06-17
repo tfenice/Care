@@ -1,6 +1,8 @@
 import Link from 'next/link'
 import { saveJournal } from '@/lib/actions/journal'
 import JournalSubmitButton from '@/components/care/JournalSubmitButton'
+import PageShell from '@/components/ui/PageShell'
+import PrimaryButton from '@/components/ui/PrimaryButton'
 
 export default async function JournalPage({
   searchParams,
@@ -13,7 +15,7 @@ export default async function JournalPage({
 
   if (saved) {
     return (
-      <div className="min-h-screen flex items-center justify-center px-6">
+      <PageShell centered>
         <div className="max-w-md w-full space-y-10">
           <div className="space-y-4">
             <p className="text-sm tracking-[0.25em] uppercase text-brown font-light">CARE</p>
@@ -21,12 +23,9 @@ export default async function JournalPage({
             <p className="text-muted font-light leading-8">ขอบคุณที่กลับมาฟังใจตัวเองวันนี้</p>
           </div>
           <div className="space-y-4">
-            <Link
-              href="/history"
-              className="block w-full rounded-full bg-ink text-cream py-4 text-center font-light tracking-wide transition-opacity hover:opacity-75"
-            >
+            <PrimaryButton href="/history">
               ดูบันทึกย้อนหลัง
-            </Link>
+            </PrimaryButton>
             <div className="text-center">
               <Link href="/home" className="text-sm text-brown underline underline-offset-4 hover:opacity-70 transition-opacity">
                 กลับหน้าหลัก
@@ -34,13 +33,13 @@ export default async function JournalPage({
             </div>
           </div>
         </div>
-      </div>
+      </PageShell>
     )
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-6 py-12">
-      <div className="max-w-md w-full space-y-8">
+    <PageShell centered>
+      <div className="max-w-md w-full space-y-10">
         <div className="space-y-3">
           <p className="text-sm tracking-[0.25em] uppercase text-brown font-light">CARE</p>
           <p className="text-muted font-light text-sm leading-6">อยู่กับตัวเองสักครู่</p>
@@ -53,9 +52,9 @@ export default async function JournalPage({
         <form action={saveJournal} className="space-y-6">
           <textarea
             name="body"
-            rows={8}
+            rows={9}
             placeholder="เขียนได้เลย ไม่ต้องสมบูรณ์แบบ"
-            className="w-full px-4 py-3 rounded-2xl border border-sand bg-white/60 text-ink placeholder:text-muted focus:outline-none focus:border-brown transition-colors resize-none leading-8 font-light"
+            className="w-full px-5 py-4 rounded-2xl border border-sand bg-white/60 text-ink placeholder:text-muted focus:outline-none focus:border-brown transition-colors resize-none leading-8 font-light"
           />
           {hasError && (
             <p className="text-sm text-error text-center">มีบางอย่างผิดพลาด ลองอีกครั้งได้นะ</p>
@@ -63,6 +62,6 @@ export default async function JournalPage({
           <JournalSubmitButton />
         </form>
       </div>
-    </div>
+    </PageShell>
   )
 }

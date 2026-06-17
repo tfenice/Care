@@ -1,5 +1,8 @@
 import Link from 'next/link'
 import { signOut } from '@/lib/actions/auth'
+import PageShell from '@/components/ui/PageShell'
+import PageHeader from '@/components/ui/PageHeader'
+import SurfaceCard from '@/components/ui/SurfaceCard'
 
 // AUTH DISABLED: demo data. Replace with user-scoped Supabase queries.
 const DEMO = {
@@ -14,15 +17,11 @@ const DEMO = {
 
 export default function ProfilePage() {
   return (
-    <div className="max-w-md mx-auto px-6 py-10 pb-32 space-y-6">
-
-      <header className="space-y-1 pt-2">
-        <p className="text-sm tracking-[0.25em] uppercase text-brown font-light">CARE</p>
-        <h1 className="text-2xl font-semibold text-ink">โปรไฟล์</h1>
-      </header>
+    <PageShell className="space-y-6">
+      <PageHeader title="โปรไฟล์" />
 
       {/* ── Account ─────────────────────────────────────────────────────────── */}
-      <section className="rounded-3xl border border-sand bg-white/40 px-6 py-6 space-y-4">
+      <SurfaceCard className="space-y-4">
         <p className="text-xs tracking-[0.2em] uppercase text-brown font-light">บัญชี</p>
         <div className="space-y-1">
           <p className="text-xs text-muted font-light">อีเมล</p>
@@ -32,10 +31,10 @@ export default function ProfilePage() {
           <p className="text-xs text-muted font-light">สมาชิกตั้งแต่</p>
           <p className="text-sm text-ink font-light">{DEMO.memberSince}</p>
         </div>
-      </section>
+      </SurfaceCard>
 
       {/* ── Stats ───────────────────────────────────────────────────────────── */}
-      <section className="rounded-3xl border border-sand bg-white/40 px-6 py-6 space-y-4">
+      <SurfaceCard className="space-y-4">
         <p className="text-xs tracking-[0.2em] uppercase text-brown font-light">ความต่อเนื่อง</p>
         <div className="grid grid-cols-2 gap-4">
           <div>
@@ -47,9 +46,9 @@ export default function ProfilePage() {
             <p className="text-xs text-muted font-light mt-1.5">สถิติสูงสุด</p>
           </div>
         </div>
-      </section>
+      </SurfaceCard>
 
-      <section className="rounded-3xl border border-sand bg-white/40 px-6 py-6 space-y-4">
+      <SurfaceCard className="space-y-4">
         <p className="text-xs tracking-[0.2em] uppercase text-brown font-light">ทั้งหมด</p>
         <div className="grid grid-cols-3 gap-4">
           {[
@@ -63,10 +62,10 @@ export default function ProfilePage() {
             </div>
           ))}
         </div>
-      </section>
+      </SurfaceCard>
 
       {/* ── Notification placeholders ────────────────────────────────────────── */}
-      <section className="rounded-3xl border border-sand bg-white/40 px-6 py-6 space-y-4">
+      <SurfaceCard className="space-y-4">
         <p className="text-xs tracking-[0.2em] uppercase text-brown font-light">การแจ้งเตือน</p>
         {[
           { label: 'เตือนเช็คอินรายวัน', sub: 'ทุกวัน เวลา 20:00' },
@@ -83,10 +82,10 @@ export default function ProfilePage() {
           </div>
         ))}
         <p className="text-xs text-muted font-light">เร็วๆ นี้</p>
-      </section>
+      </SurfaceCard>
 
       {/* ── Links ───────────────────────────────────────────────────────────── */}
-      <section className="rounded-3xl border border-sand bg-white/40 px-6 py-6 space-y-1">
+      <SurfaceCard className="space-y-1">
         <p className="text-xs tracking-[0.2em] uppercase text-brown font-light mb-3">ลิงก์</p>
         {[
           { href: '/settings', label: 'ตั้งค่าและความเป็นส่วนตัว' },
@@ -102,7 +101,7 @@ export default function ProfilePage() {
             <span className="text-muted text-sm">→</span>
           </Link>
         ))}
-      </section>
+      </SurfaceCard>
 
       {/* ── Privacy note ────────────────────────────────────────────────────── */}
       <section className="rounded-3xl border border-sand bg-white/20 px-6 py-5">
@@ -121,7 +120,6 @@ export default function ProfilePage() {
           ออกจากระบบ
         </button>
       </form>
-
-    </div>
+    </PageShell>
   )
 }

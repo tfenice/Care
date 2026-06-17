@@ -1,17 +1,8 @@
-// PROTOTYPE — all data is demo-only. Replace getDashboardData(), getWeeklyReflectionDemo(),
-// and getMemoriesDemo() with user-scoped Supabase queries in Launch Hardening Sprint.
-
 import Link from 'next/link'
-import { generateWeeklyReflection } from '@/lib/services/weeklyReflection'
+import { redirect } from 'next/navigation'
+import { createClient } from '@/lib/supabase/server'
+import { generateWeeklyReflection, getPreviousWeekBounds } from '@/lib/services/weeklyReflection'
 import { extractMemories, type ExtractedMemory } from '@/lib/services/memoryExtractor'
-import {
-  DEMO_DASHBOARD,
-  DEMO_WEEK_CHECKINS,
-  DEMO_WEEK_JOURNALS,
-  DEMO_WEEK_CARDS,
-  DEMO_MEMORY_JOURNALS,
-  DEMO_MEMORY_CHECKINS,
-} from '@/lib/demo/dashboard'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -26,23 +17,9 @@ type DashboardData = {
   latestCard: { categoryNameTh: string; titleTh: string; bodyTh: string } | null
 }
 
-// ── Data layer ────────────────────────────────────────────────────────────────
-
-async function getDashboardData(): Promise<DashboardData> {
-  return DEMO_DASHBOARD
-}
-
-function getMemoriesDemo(): ExtractedMemory[] {
-  return extractMemories({ journals: DEMO_MEMORY_JOURNALS, checkins: DEMO_MEMORY_CHECKINS })
-}
-
-function getWeeklyReflectionDemo() {
-  return generateWeeklyReflection({
-    checkins: DEMO_WEEK_CHECKINS,
-    journals: DEMO_WEEK_JOURNALS,
-    cards:    DEMO_WEEK_CARDS,
-  })
-}
+// Join shape for reading_history → ritual_cards → card_categories
+type CardJoin = { title_th: string; body_th: string; card_categories: { name_th: string } | null }
+type ReadingHistoryJoin = { ritual_cards: CardJoin | null }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -59,12 +36,111 @@ function greetingText(hour: number) {
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default async function HomePage() {
-  const [data, weekReflection] = await Promise.all([
-    getDashboardData(),
-    Promise.resolve(getWeeklyReflectionDemo()),
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
+  const prevBounds = getPreviousWeekBounds()
+
+  // All queries run in parallel
+  const [
+    profileResult,
+    checkinCountResult,
+    journalCountResult,
+    cardCountResult,
+    latestJournalResult,
+    latestCardResult,
+    weekCheckinsResult,
+    weekJournalsResult,
+    memJournalsResult,
+    memCheckinsResult,
+  ] = await Promise.all([
+    supabase.from('profiles')
+      .select('display_name, current_streak, longest_streak')
+      .eq('id', user.id)
+      .maybeSingle(),
+    supabase.from('daily_checkins')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', user.id),
+    supabase.from('journal_entries')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+      .is('deleted_at', null),
+    supabase.from('reading_history')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', user.id),
+    supabase.from('journal_entries')
+      .select('body')
+      .eq('user_id', user.id)
+      .is('deleted_at', null)
+      .order('created_at', { ascending: false })
+      .limit(1),
+    supabase.from('reading_history')
+      .select('ritual_cards(title_th, body_th, card_categories(name_th))')
+      .eq('user_id', user.id)
+      .order('read_at', { ascending: false })
+      .limit(1),
+    supabase.from('daily_checkins')
+      .select('mood_key, note')
+      .eq('user_id', user.id)
+      .gte('checked_in_at', `${prevBounds.start}T00:00:00+07:00`)
+      .lte('checked_in_at', `${prevBounds.end}T23:59:59+07:00`)
+      .order('checked_in_at', { ascending: false })
+      .limit(7),
+    supabase.from('journal_entries')
+      .select('body')
+      .eq('user_id', user.id)
+      .is('deleted_at', null)
+      .gte('created_at', `${prevBounds.start}T00:00:00+07:00`)
+      .lte('created_at', `${prevBounds.end}T23:59:59+07:00`)
+      .order('created_at', { ascending: false })
+      .limit(7),
+    supabase.from('journal_entries')
+      .select('body, created_at')
+      .eq('user_id', user.id)
+      .is('deleted_at', null)
+      .order('created_at', { ascending: false })
+      .limit(50),
+    supabase.from('daily_checkins')
+      .select('mood_key, note, checked_in_at')
+      .eq('user_id', user.id)
+      .order('checked_in_at', { ascending: false })
+      .limit(50),
   ])
-  const memories = getMemoriesDemo()
-  const topMemory = memories[memories.length - 1] ?? null
+
+  // Build latest card from join result (reading_history → ritual_cards → card_categories)
+  const rawCardRow = (latestCardResult.data?.[0] as unknown as ReadingHistoryJoin | undefined)
+  const latestCard = rawCardRow?.ritual_cards ? {
+    titleTh: rawCardRow.ritual_cards.title_th,
+    bodyTh: rawCardRow.ritual_cards.body_th,
+    categoryNameTh: rawCardRow.ritual_cards.card_categories?.name_th ?? '',
+  } : null
+
+  const profile = profileResult.data
+  const data: DashboardData = {
+    name: profile?.display_name ?? null,
+    streak: profile?.current_streak ?? 0,
+    longestStreak: profile?.longest_streak ?? 0,
+    totalCheckins: checkinCountResult.count ?? 0,
+    totalJournals: journalCountResult.count ?? 0,
+    totalCards: cardCountResult.count ?? 0,
+    latestJournal: latestJournalResult.data?.[0] ?? null,
+    latestCard,
+  }
+
+  // Weekly reflection from previous week's real data
+  const weekReflection = generateWeeklyReflection({
+    checkins: weekCheckinsResult.data ?? [],
+    journals: weekJournalsResult.data ?? [],
+    cards: [], // reading_history not yet populated — see DATA-02
+  })
+
+  // Memory section from recent journals and checkins
+  const memories = extractMemories({
+    journals: memJournalsResult.data ?? [],
+    checkins: memCheckinsResult.data ?? [],
+  })
+  const topMemory: ExtractedMemory | null = memories[memories.length - 1] ?? null
   const hour = new Date().getHours()
 
   return (

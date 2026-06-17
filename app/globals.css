@@ -11,7 +11,20 @@
   --color-sand:   #D8C7AE;
   --color-error:  #B5534F;
 
+  /* ── Category tokens ──────────────────────────────── */
+  --color-acceptance: #9B9E94;   /* warm stone  — stillness  */
+  --color-presence:   #B8892A;   /* amber       — attention  */
+  --color-hope:       #5F7A65;   /* sage        — possibility*/
+  /* growth shares --color-brown (#8B6F4E)                   */
+
   --font-sans: var(--font-sarabun);
+}
+
+:root {
+  --color-acceptance-rgb: 155 158 148;
+  --color-presence-rgb: 184 137 42;
+  --color-hope-rgb: 95 122 101;
+  --color-growth-rgb: 139 111 78;
 }
 
 /* ── Base ─────────────────────────────────────────────────────────────────── */
@@ -28,4 +41,42 @@ body {
 
 .pb-safe {
   padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* ── Card animations ───────────────────────────────────────────────────────── */
+@keyframes care-card-in {
+  from { opacity: 0; transform: translateY(18px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0)    scale(1);    }
+}
+
+.care-card-in {
+  animation: care-card-in 0.55s cubic-bezier(0.34, 1.1, 0.64, 1) both;
+}
+
+/* Staggered reveal for card face sections */
+@keyframes care-section-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0);   }
+}
+
+.care-section-in {
+  animation: care-section-in 0.45s ease-out both;
+}
+
+/* Card back breathes while the user pauses before reveal */
+@keyframes care-back-breathe {
+  0%, 100% { transform: scale(1); }
+  50%       { transform: scale(1.012); }
+}
+
+.care-back-breathe {
+  animation: care-back-breathe 2.5s ease-in-out infinite;
+}
+
+/* Whisper: each phrase fades in, holds, then fades out */
+@keyframes care-whisper {
+  0%   { opacity: 0; transform: translateY(5px); }
+  22%  { opacity: 1; transform: translateY(0);   }
+  72%  { opacity: 1; transform: translateY(0);   }
+  100% { opacity: 0; transform: translateY(-3px);}
 }

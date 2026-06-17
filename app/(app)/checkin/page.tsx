@@ -1,3 +1,4 @@
+import PageShell from '@/components/ui/PageShell'
 import CheckinForm from '@/components/care/CheckinForm'
 
 export default async function CheckinPage({
@@ -9,7 +10,7 @@ export default async function CheckinPage({
   const hasError = !!params.error
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-6 py-12">
+    <PageShell centered>
       <div className="max-w-md w-full space-y-10">
         <div className="text-center space-y-4">
           <p className="text-sm tracking-[0.25em] uppercase text-brown font-light">CARE</p>
@@ -21,6 +22,6 @@ export default async function CheckinPage({
         </div>
         <CheckinForm hasError={hasError} />
       </div>
-    </div>
+    </PageShell>
   )
 }

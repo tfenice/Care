@@ -1,16 +1,20 @@
-// PROTOTYPE — all data is demo-only. Replace DEMO_JOURNALS / DEMO_CHECKINS
-// with user-scoped Supabase queries in Launch Hardening Sprint.
-
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
+import { createClient } from '@/lib/supabase/server'
 import { extractMemories, extractThemes, type ExtractedMemory } from '@/lib/services/memoryExtractor'
-import { DEMO_JOURNALS, DEMO_CHECKINS } from '@/lib/demo/memory'
+import PageShell from '@/components/ui/PageShell'
+import PageHeader from '@/components/ui/PageHeader'
+import SurfaceCard from '@/components/ui/SurfaceCard'
 
-function getPageData() {
-  const memories = extractMemories({ journals: DEMO_JOURNALS, checkins: DEMO_CHECKINS })
+function getPageData(
+  journals: Array<{ body: string; created_at: string }>,
+  checkins: Array<{ mood_key: string; note: string | null; checked_in_at: string }>,
+) {
+  const memories = extractMemories({ journals, checkins })
 
   // Aggregate themes across all journals
   const themeCount: Record<string, number> = {}
-  for (const j of DEMO_JOURNALS) {
+  for (const j of journals) {
     for (const t of extractThemes(j.body)) {
       themeCount[t] = (themeCount[t] ?? 0) + 1
     }
@@ -19,13 +23,13 @@ function getPageData() {
 
   // Mood frequency from checkins
   const moodCount: Record<string, number> = {}
-  for (const c of DEMO_CHECKINS) {
+  for (const c of checkins) {
     moodCount[c.mood_key] = (moodCount[c.mood_key] ?? 0) + 1
   }
   const moods = Object.entries(moodCount).sort((a, b) => b[1] - a[1])
   const maxMood = moods[0]?.[1] ?? 1
 
-  // Order: synthesis first (most insight), then journal, then checkin
+  // Synthesis first (most insight), then journal, then checkin
   const ordered: ExtractedMemory[] = [
     ...memories.filter(m => m.source_type === 'synthesis'),
     ...memories.filter(m => m.source_type === 'journal'),
@@ -48,17 +52,33 @@ const SOURCE_BG: Record<ExtractedMemory['source_type'], string> = {
 }
 
 export default async function MemoryPage() {
-  const { memories, themes, moods, maxMood } = getPageData()
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
+  const [journalsResult, checkinsResult] = await Promise.all([
+    supabase.from('journal_entries')
+      .select('body, created_at')
+      .eq('user_id', user.id)
+      .is('deleted_at', null)
+      .order('created_at', { ascending: false })
+      .limit(50),
+    supabase.from('daily_checkins')
+      .select('mood_key, note, checked_in_at')
+      .eq('user_id', user.id)
+      .order('checked_in_at', { ascending: false })
+      .limit(50),
+  ])
+
+  const { memories, themes, moods, maxMood } = getPageData(
+    journalsResult.data ?? [],
+    checkinsResult.data ?? [],
+  )
   const hasData = memories.length > 0
 
   return (
-    <div className="max-w-md mx-auto px-6 py-10 pb-32 space-y-6">
-
-      <header className="space-y-1 pt-2">
-        <p className="text-sm tracking-[0.25em] uppercase text-brown font-light">CARE</p>
-        <h1 className="text-2xl font-semibold text-ink">ความทรงจำ</h1>
-        <p className="text-muted font-light leading-7">สิ่งที่ Care สังเกตเห็นในตัวคุณ</p>
-      </header>
+    <PageShell className="space-y-6">
+      <PageHeader title="ความทรงจำ" subtitle="สิ่งที่ Care สังเกตเห็นในตัวคุณ" />
 
       {!hasData ? (
         <section className="rounded-3xl border border-sand bg-white/40 px-6 py-12 text-center space-y-5">
@@ -103,7 +123,7 @@ export default async function MemoryPage() {
 
           {/* ── Recurring themes ────────────────────────────────────────────── */}
           {themes.length > 0 && (
-            <section className="rounded-3xl border border-sand bg-white/40 px-6 py-6 space-y-4">
+            <SurfaceCard className="space-y-4">
               <p className="text-xs tracking-[0.2em] uppercase text-brown font-light">เรื่องที่คุณมักนึกถึง</p>
               <div className="flex flex-wrap gap-2">
                 {themes.map(([theme, count]) => (
@@ -116,12 +136,12 @@ export default async function MemoryPage() {
                   </span>
                 ))}
               </div>
-            </section>
+            </SurfaceCard>
           )}
 
           {/* ── Mood frequency ──────────────────────────────────────────────── */}
           {moods.length > 0 && (
-            <section className="rounded-3xl border border-sand bg-white/40 px-6 py-6 space-y-4">
+            <SurfaceCard className="space-y-4">
               <p className="text-xs tracking-[0.2em] uppercase text-brown font-light">ความรู้สึกในช่วงนี้</p>
               <div className="space-y-3">
                 {moods.map(([mood, count]) => (
@@ -139,7 +159,7 @@ export default async function MemoryPage() {
                   </div>
                 ))}
               </div>
-            </section>
+            </SurfaceCard>
           )}
         </>
       )}
@@ -160,7 +180,6 @@ export default async function MemoryPage() {
           หน้าหลัก
         </Link>
       </div>
-
-    </div>
+    </PageShell>
   )
 }

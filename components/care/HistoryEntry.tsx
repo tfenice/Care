@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { focusRing } from '@/components/ui/focus'
 
 type Props = {
   displayDate: string
@@ -40,7 +41,7 @@ export default function HistoryEntry({ displayDate, moodKey, cardTitle, journalB
             <button
               type="button"
               onClick={() => setExpanded(!expanded)}
-              className="text-xs text-brown underline underline-offset-2 hover:opacity-70 transition-opacity"
+              className={`text-xs text-brown underline underline-offset-2 hover:opacity-70 transition-opacity ${focusRing}`}
             >
               {expanded ? 'ย่อ' : 'อ่านต่อ'}
             </button>

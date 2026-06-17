@@ -21,10 +21,10 @@ Items in **Critical** and **High** must be resolved before a public beta.
 
 ## High (fix before user growth)
 
-### DATA-01 — Most pages display demo data
-**Impact:** Nothing shown is real user data. Every page returns hardcoded demo values.
-**Files:** `app/(app)/page.tsx`, `app/(app)/growth/page.tsx`, `app/(app)/memory/page.tsx`, `app/(app)/profile/page.tsx`, `app/(app)/history/page.tsx`, `app/admin/page.tsx`
-**Fix:** Replace each `DEMO` constant with user-scoped Supabase queries using the authenticated user's ID.
+### DATA-01 — history and profile pages display demo data
+**Impact:** `history` and `profile` pages still return hardcoded demo values.
+**Files:** `app/(app)/profile/page.tsx`, `app/(app)/history/page.tsx`
+**Fix:** Replace DEMO constants with user-scoped Supabase queries. Home, memory, growth, and admin pages are now wired to real data.
 
 ### DATA-02 — Card draw is not persisted
 **Impact:** `drawCard()` does not insert a `reading_history` row — the drawn card is hardcoded demo content.
@@ -56,9 +56,10 @@ Items in **Critical** and **High** must be resolved before a public beta.
 **Files:** `types/database.ts`, `supabase/migrations/003_weekly_reflections.sql`
 **Fix:** Once CLI is wired, delete the hand-written block and let codegen own the file.
 
-### DEMO-01 — demo fixtures at lib/demo/* must be replaced with real queries
-**Impact:** All pages import from `lib/demo/`. When real data queries are wired, each import must be replaced with a user-scoped Supabase query filtered by the authenticated `user_id`.
-**Files:** `lib/demo/dashboard.ts`, `lib/demo/memory.ts`, `lib/demo/growth.ts`, `lib/demo/admin.ts`, `lib/demo/history.ts`
+### DEMO-01 — lib/demo/history.ts remains (history page still uses demo data)
+**Impact:** History page imports from `lib/demo/history.ts`. Profile page still uses demo values.
+**Files:** `lib/demo/history.ts`, `app/(app)/history/page.tsx`, `app/(app)/profile/page.tsx`
+**Note:** `lib/demo/dashboard.ts`, `lib/demo/memory.ts`, `lib/demo/growth.ts`, `lib/demo/admin.ts` are now unused (Sprint 3A complete). They can be deleted once the remaining pages are wired.
 
 ### TZ-01 — Bangkok week-boundary must be verified before persistence
 **Status:** `getWeekBounds()` was fixed to derive day-of-week from UTC midnight reference. Must be verified end-to-end with real Bangkok timestamps before `weekly_reflections` rows are persisted.

@@ -1,17 +1,48 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { signIn } from "@/lib/actions/auth";
+import { createClient } from "@/lib/supabase/server";
+import EntryWhisper from "@/components/care/EntryWhisper";
+
+// Map raw internal error codes to friendly Thai messages.
+// Raw codes are never shown to the user.
+function toUserMessage(raw: string | null): string | null {
+  if (!raw) return null
+  if (raw.startsWith('SEND:') || raw.startsWith('SEND_THROW:')) {
+    return 'ส่งลิงก์ไม่ได้ในขณะนี้ ลองอีกครั้งสักครู่'
+  }
+  if (raw === 'missing_site_url') {
+    return 'การตั้งค่าระบบผิดพลาด กรุณาติดต่อผู้ดูแล'
+  }
+  return 'มีบางอย่างผิดพลาด ลองอีกครั้งได้นะ'
+}
 
 export default async function LoginPage({
   searchParams,
 }: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
+  // Redirect already-authenticated users — no need to see the login form again
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (user) redirect('/checkin')
+
   const params = await searchParams;
   const sent = params.sent === "1";
-  const errorMsg = typeof params.error === "string" ? params.error : params.error ? "error" : null;
+  const rawError = typeof params.error === "string" ? params.error : params.error ? "error" : null;
+  const errorMsg = toUserMessage(rawError);
 
   if (sent) {
     return <ConfirmationView />;
+  }
+
+  // Show whisper only on the clean login screen — not on error redirects
+  if (!rawError) {
+    return (
+      <EntryWhisper>
+        <LoginForm errorMsg={null} />
+      </EntryWhisper>
+    )
   }
 
   return <LoginForm errorMsg={errorMsg} />;
@@ -78,7 +109,7 @@ function LoginForm({ errorMsg }: { errorMsg: string | null }) {
             className="w-full px-4 py-3 rounded-2xl border border-sand bg-white/60 text-ink placeholder:text-muted focus:outline-none focus:border-brown transition-colors"
           />
           {errorMsg && (
-            <p className="text-sm text-error pl-1 break-all">
+            <p className="text-sm text-error pl-1">
               {errorMsg}
             </p>
           )}
@@ -92,13 +123,24 @@ function LoginForm({ errorMsg }: { errorMsg: string | null }) {
         </button>
       </form>
 
-      <p className="text-center text-sm text-muted font-light leading-6">
-        ไม่ต้องมีรหัสผ่าน
-        <span className="mx-2 text-sand">·</span>
-        ปลอดภัย
-        <span className="mx-2 text-sand">·</span>
-        เป็นส่วนตัว
-      </p>
+      <div className="space-y-5">
+        <p className="text-center text-sm text-muted font-light leading-6">
+          ไม่ต้องมีรหัสผ่าน
+          <span className="mx-2 text-sand">·</span>
+          ปลอดภัย
+          <span className="mx-2 text-sand">·</span>
+          เป็นส่วนตัว
+        </p>
+        <div className="border-t border-sand/50 pt-5 space-y-1.5">
+          <p className="text-center text-xs text-brown font-light tracking-wide">
+            จำคุณไว้บนอุปกรณ์นี้
+          </p>
+          <p className="text-center text-xs text-muted font-light leading-6">
+            หลังจากเข้าใช้งานครั้งแรก คุณจะยังเข้า Care ได้บนเบราว์เซอร์นี้
+            จนกว่าจะออกจากระบบ
+          </p>
+        </div>
+      </div>
     </div>
   );
 }

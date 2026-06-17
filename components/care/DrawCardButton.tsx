@@ -1,16 +1,16 @@
 'use client'
 
 import { useFormStatus } from 'react-dom'
+import PrimaryButton from '@/components/ui/PrimaryButton'
 
 export default function DrawCardButton() {
   const { pending } = useFormStatus()
   return (
-    <button
+    <PrimaryButton
       type="submit"
       disabled={pending}
-      className="w-full rounded-full bg-ink text-cream py-4 font-light tracking-wide transition-opacity hover:opacity-75 disabled:opacity-40"
     >
       {pending ? 'กำลังมา...' : 'เปิดการ์ดวันนี้'}
-    </button>
+    </PrimaryButton>
   )
 }

@@ -1,18 +1,17 @@
 import Link from 'next/link'
+import PageShell from '@/components/ui/PageShell'
+import PageHeader from '@/components/ui/PageHeader'
+import SurfaceCard from '@/components/ui/SurfaceCard'
 
 const VERSION = '0.1.0'
 
 export default function SettingsPage() {
   return (
-    <div className="max-w-md mx-auto px-6 py-10 pb-32 space-y-6">
-
-      <header className="space-y-1 pt-2">
-        <p className="text-sm tracking-[0.25em] uppercase text-brown font-light">CARE</p>
-        <h1 className="text-2xl font-semibold text-ink">ตั้งค่า</h1>
-      </header>
+    <PageShell className="space-y-6">
+      <PageHeader title="ตั้งค่า" />
 
       {/* ── Data & Privacy ──────────────────────────────────────────────────── */}
-      <section className="rounded-3xl border border-sand bg-white/40 px-6 py-6 space-y-4">
+      <SurfaceCard className="space-y-4">
         <p className="text-xs tracking-[0.2em] uppercase text-brown font-light">ข้อมูลและความเป็นส่วนตัว</p>
         <p className="text-sm font-light text-ink leading-7">
           Care เก็บเฉพาะข้อมูลที่จำเป็นสำหรับการดูแลตัวเองของคุณ ได้แก่ อีเมล อารมณ์ประจำวัน บันทึก และการ์ดที่รับ
@@ -31,10 +30,10 @@ export default function SettingsPage() {
             </p>
           ))}
         </div>
-      </section>
+      </SurfaceCard>
 
       {/* ── Reminders ───────────────────────────────────────────────────────── */}
-      <section className="rounded-3xl border border-sand bg-white/40 px-6 py-6 space-y-4">
+      <SurfaceCard className="space-y-4">
         <p className="text-xs tracking-[0.2em] uppercase text-brown font-light">การแจ้งเตือน</p>
         <div className="space-y-4">
           {[
@@ -53,10 +52,10 @@ export default function SettingsPage() {
           ))}
         </div>
         <p className="text-xs text-muted font-light">เร็วๆ นี้</p>
-      </section>
+      </SurfaceCard>
 
       {/* ── Export data (placeholder) ─────────────────────────────────────── */}
-      <section className="rounded-3xl border border-sand bg-white/40 px-6 py-6 space-y-3">
+      <SurfaceCard className="space-y-3">
         <p className="text-xs tracking-[0.2em] uppercase text-brown font-light">ข้อมูลของคุณ</p>
         <div className="flex items-center justify-between py-1 opacity-50 cursor-not-allowed">
           <div>
@@ -66,10 +65,10 @@ export default function SettingsPage() {
           <span className="text-muted text-sm">→</span>
         </div>
         <p className="text-xs text-muted font-light">เร็วๆ นี้</p>
-      </section>
+      </SurfaceCard>
 
       {/* ── Delete account (placeholder) ──────────────────────────────────── */}
-      <section className="rounded-3xl border border-sand bg-white/40 px-6 py-6 space-y-3">
+      <SurfaceCard className="space-y-3">
         <p className="text-xs tracking-[0.2em] uppercase text-brown font-light">บัญชี</p>
         <div className="flex items-center justify-between py-1 opacity-40 cursor-not-allowed">
           <div>
@@ -79,10 +78,10 @@ export default function SettingsPage() {
           <span className="text-muted text-sm">→</span>
         </div>
         <p className="text-xs text-muted font-light">ยังไม่พร้อมใช้งาน — หากต้องการลบบัญชีติดต่อเราได้เลย</p>
-      </section>
+      </SurfaceCard>
 
       {/* ── About / Version ───────────────────────────────────────────────── */}
-      <section className="rounded-3xl border border-sand bg-white/40 px-6 py-6 space-y-1">
+      <SurfaceCard className="space-y-1">
         <p className="text-xs tracking-[0.2em] uppercase text-brown font-light mb-3">เกี่ยวกับ Care</p>
         <div className="flex items-center justify-between py-2">
           <span className="text-sm font-light text-ink">เวอร์ชัน</span>
@@ -96,14 +95,13 @@ export default function SettingsPage() {
           <span className="text-sm font-light text-ink">ข้อกำหนดการใช้งาน</span>
           <span className="text-muted text-sm">→</span>
         </div>
-      </section>
+      </SurfaceCard>
 
       <div className="flex justify-center">
         <Link href="/profile" className="text-sm text-brown underline underline-offset-4 hover:opacity-70 transition-opacity">
           กลับโปรไฟล์
         </Link>
       </div>
-
-    </div>
+    </PageShell>
   )
 }

@@ -4,18 +4,26 @@ import { useState } from 'react'
 import { useFormStatus } from 'react-dom'
 import { submitCheckin } from '@/lib/actions/checkin'
 import { MOOD_KEYS, type MoodKey } from '@/types/models'
+import PrimaryButton from '@/components/ui/PrimaryButton'
+import { focusRing } from '@/components/ui/focus'
 
 function SubmitButton({ disabled }: { disabled: boolean }) {
   const { pending } = useFormStatus()
   return (
-    <button
+    <PrimaryButton
       type="submit"
       disabled={disabled || pending}
-      className="w-full rounded-full bg-ink text-cream py-4 font-light tracking-wide transition-opacity hover:opacity-75 disabled:opacity-40 disabled:cursor-not-allowed"
     >
       {pending ? 'กำลังบันทึก...' : 'บันทึก'}
-    </button>
+    </PrimaryButton>
   )
+}
+
+const MOOD_DOT: Record<MoodKey, string> = {
+  'สบายดี':  'bg-brown',
+  'พอไหว':   'bg-brown/50',
+  'เหนื่อย': 'bg-muted/60',
+  'สับสน':   'bg-sand border border-sand/80',
 }
 
 export default function CheckinForm({ hasError }: { hasError: boolean }) {
@@ -29,13 +37,18 @@ export default function CheckinForm({ hasError }: { hasError: boolean }) {
             key={mood}
             type="button"
             onClick={() => setSelected(mood)}
-            className={`w-full py-4 rounded-2xl text-base font-light transition-colors border ${
+            className={`w-full py-4 px-5 rounded-2xl text-base font-light transition-all duration-200 border flex items-center gap-3 ${focusRing} ${
               selected === mood
-                ? 'bg-ink text-cream border-ink'
-                : 'bg-white/40 text-ink border-sand hover:border-brown'
+                ? 'bg-ink text-cream border-ink shadow-sm'
+                : 'bg-white/50 text-ink border-sand hover:border-brown/60 hover:bg-white/70'
             }`}
           >
-            {mood}
+            <span
+              className={`w-2.5 h-2.5 rounded-full shrink-0 transition-colors ${
+                selected === mood ? 'bg-cream/80' : MOOD_DOT[mood]
+              }`}
+            />
+            <span className="flex-1 text-center">{mood}</span>
           </button>
         ))}
         <input type="hidden" name="mood_key" value={selected ?? ''} />
@@ -43,9 +56,9 @@ export default function CheckinForm({ hasError }: { hasError: boolean }) {
 
       <textarea
         name="note"
-        rows={3}
+        rows={4}
         placeholder="มีอะไรอยากเล่าไหม"
-        className="w-full px-4 py-3 rounded-2xl border border-sand bg-white/60 text-ink placeholder:text-muted focus:outline-none focus:border-brown transition-colors resize-none"
+        className="w-full px-5 py-4 rounded-2xl border border-sand bg-white/60 text-ink placeholder:text-muted focus:outline-none focus:border-brown transition-colors resize-none leading-8 font-light"
       />
 
       {hasError && (

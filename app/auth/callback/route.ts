@@ -20,6 +20,7 @@ export async function GET(request: NextRequest) {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
+      auth: { flowType: 'pkce' },
       cookies: {
         getAll() {
           return request.cookies.getAll()
@@ -37,6 +38,7 @@ export async function GET(request: NextRequest) {
   if (error) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const detail = `name=${error.name}|msg=${error.message}|status=${(error as any).status}|code=${(error as any).code}`
+    console.error('[auth/callback] exchange error:', detail)
     return NextResponse.redirect(
       new URL(`/login?error=${encodeURIComponent(detail)}`, origin)
     )
