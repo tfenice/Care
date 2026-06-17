@@ -59,15 +59,67 @@ export default async function CardsPage({
     const cardId = rawId && UUID_RE.test(rawId) ? rawId : null
     if (!cardId) redirect('/cards')
 
-    const { data } = await supabase
-      .from('ritual_cards')
-      .select('title_th, body_th, reflection_prompt_th, sort_order, card_categories(name_th)')
-      .eq('id', cardId)
-      .eq('is_active', true)
-      .maybeSingle()
+    // Fetch card content and ownership proof in parallel.
+    // The history check is the discovery gate — card content must not render
+    // unless a reading_history row exists for this user and card.
+    const [cardResult, historyCheck] = await Promise.all([
+      supabase
+        .from('ritual_cards')
+        .select('title_th, body_th, reflection_prompt_th, sort_order, card_categories(name_th)')
+        .eq('id', cardId)
+        .eq('is_active', true)
+        .maybeSingle(),
+      supabase
+        .from('reading_history')
+        .select('card_id', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .eq('card_id', cardId),
+    ])
 
-    const card = data as DrawnCard | null
+    const card = cardResult.data as DrawnCard | null
     if (!card) redirect('/cards')
+
+    // History query error — cannot verify ownership, show recoverable state
+    if (historyCheck.error) {
+      console.error('[CardsPage] reading_history ownership check failed:', historyCheck.error.message)
+      return (
+        <div className="min-h-screen flex items-center justify-center px-6">
+          <div className="max-w-md w-full text-center space-y-10">
+            <div className="space-y-4">
+              <p className="text-sm tracking-[0.25em] uppercase text-brown font-light">CARE</p>
+              <h1 className="text-xl font-semibold text-ink leading-relaxed">
+                ตอนนี้ยังเปิดการ์ดนี้ไม่ได้
+              </h1>
+              <p className="text-muted font-light leading-8">
+                ลองกลับมาใหม่อีกครั้งนะ
+              </p>
+            </div>
+            <PrimaryButton href="/cards">
+              กลับ
+            </PrimaryButton>
+          </div>
+        </div>
+      )
+    }
+
+    // No history row — this card has not been drawn by this user
+    if ((historyCheck.count ?? 0) === 0) {
+      return (
+        <div className="min-h-screen flex items-center justify-center px-6">
+          <div className="max-w-md w-full text-center space-y-10">
+            <div className="space-y-4">
+              <p className="text-sm tracking-[0.25em] uppercase text-brown font-light">CARE</p>
+              <h1 className="text-xl font-semibold text-ink leading-relaxed">
+                การ์ดใบนี้ยังไม่ได้เดินทางมาหาคุณ
+              </h1>
+            </div>
+            <PrimaryButton href="/cards">
+              กลับ
+            </PrimaryButton>
+          </div>
+        </div>
+      )
+    }
 
     const category = card.card_categories?.name_th ?? 'CARE'
 

@@ -47,16 +47,16 @@ function CollectionTile({ card }: { card: CardEntry }) {
           background: `rgb(${token.rgb} / 0.07)`,
           border: `1px solid rgb(${token.rgb} / 0.22)`,
         } : {
-          background: 'rgba(139,111,78,0.03)',
-          border: '1px solid rgba(139,111,78,0.1)',
+          background: 'rgba(201,169,122,0.05)',
+          border: '1px solid rgba(201,169,122,0.14)',
         }}
       >
-        <div style={{ color: card.seen ? token.color : 'rgba(139,111,78,0.22)' }}>
+        <div style={{ color: card.seen ? token.color : 'rgba(201,169,122,0.35)' }}>
           <CardSignature code={card.code} category={card.categoryName} size="md" />
         </div>
         <span
           className="text-[9px] tracking-[0.15em] font-light"
-          style={{ color: card.seen ? `rgb(${token.rgb} / 0.55)` : 'rgba(139,111,78,0.22)' }}
+          style={{ color: card.seen ? `rgb(${token.rgb} / 0.55)` : 'rgba(201,169,122,0.45)' }}
         >
           {card.code}
         </span>
@@ -95,13 +95,18 @@ export default async function CollectionPage() {
 
   if (historyResult.error) {
     console.error('[CollectionPage] reading_history query failed:', historyResult.error.message)
+    return (
+      <PageShell className="space-y-10">
+        <PageHeader title="ที่เก็บการ์ด" />
+        <div className="text-center space-y-3 py-16">
+          <p className="text-sm font-light text-ink">ไม่สามารถโหลดประวัติการ์ดได้</p>
+          <p className="text-xs font-light text-muted">ลองอีกครั้งในภายหลัง</p>
+        </div>
+      </PageShell>
+    )
   }
 
-  const seenCardIds = new Set(
-    historyResult.error
-      ? []
-      : (historyResult.data ?? []).map(r => r.card_id)
-  )
+  const seenCardIds = new Set((historyResult.data ?? []).map(r => r.card_id))
 
   // Sort by category sort_order, then card sort_order
   const rawCards = (cardsResult.data ?? []) as unknown as RawCard[]
@@ -135,11 +140,10 @@ export default async function CollectionPage() {
     section.cards.push(entry)
   }
 
-  const seenCount = sections.reduce((n, s) => n + s.cards.filter(c => c.seen).length, 0)
+  const hasSeen   = seenCardIds.size > 0
+  const hasUnseen = sections.some(s => s.cards.some(c => !c.seen))
 
-  const subtitle = seenCount === 0
-    ? 'การ์ดทุกใบกำลังรอคุณ'
-    : `การ์ด ${seenCount} ใบที่เคยเดินทางมาหาคุณ`
+  const subtitle = hasSeen ? 'การ์ดที่เคยเดินทางมาหาคุณ' : 'การ์ดทุกใบกำลังรอคุณ'
 
   return (
     <PageShell className="space-y-10">
@@ -149,10 +153,8 @@ export default async function CollectionPage() {
         subtitle={subtitle}
       />
 
-      {historyResult.error && (
-        <p className="text-xs text-muted font-light text-center">
-          ไม่สามารถโหลดประวัติการอ่านได้ · ข้อมูลอาจไม่ครบ
-        </p>
+      {hasSeen && hasUnseen && (
+        <p className="text-xs font-light text-muted -mt-4">บางใบยังเงียบอยู่</p>
       )}
 
       {sections.map(section => {

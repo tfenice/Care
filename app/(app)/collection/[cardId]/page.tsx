@@ -55,19 +55,33 @@ export default async function CollectionCardPage({
 
   const card = cardResult.data as unknown as CardDetail
 
+  const category = card.card_categories?.name_th ?? 'ไม่ทราบหมวด'
+  const token = getCategoryToken(category)
+  const code = `${token.code}-${String(card.sort_order).padStart(2, '0')}`
+
   if (historyResult.error) {
     console.error('[CollectionCardPage] reading_history query failed:', historyResult.error.message)
+    return (
+      <PageShell className="space-y-8">
+        <Link
+          href="/collection"
+          className="inline-flex items-center gap-1.5 text-sm font-light text-muted hover:text-ink transition-colors"
+        >
+          ← ที่เก็บการ์ด
+        </Link>
+        <div className="text-center space-y-3 py-16">
+          <p className="text-sm font-light text-ink">ไม่สามารถโหลดข้อมูลการ์ดนี้ได้</p>
+          <p className="text-xs font-light text-muted">ลองอีกครั้งในภายหลัง</p>
+        </div>
+      </PageShell>
+    )
   }
 
-  const history = historyResult.error ? [] : (historyResult.data ?? [])
+  const history = historyResult.data ?? []
   const seen = history.length > 0
   const count = history.length
   const firstSeen = history[0]?.read_at ?? null
   const lastSeen  = history[history.length - 1]?.read_at ?? null
-
-  const category = card.card_categories?.name_th ?? 'ไม่ทราบหมวด'
-  const token = getCategoryToken(category)
-  const code = `${token.code}-${String(card.sort_order).padStart(2, '0')}`
 
   return (
     <PageShell className="space-y-8">
@@ -77,12 +91,6 @@ export default async function CollectionCardPage({
       >
         ← ที่เก็บการ์ด
       </Link>
-
-      {historyResult.error && (
-        <p className="text-xs text-muted font-light">
-          ไม่สามารถโหลดประวัติการพบกันได้ · ข้อมูลอาจไม่ครบ
-        </p>
-      )}
 
       {seen ? (
         <>
