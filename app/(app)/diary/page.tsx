@@ -106,7 +106,7 @@ export default async function DiaryPage() {
   const letter = generateCareLetter({
     weekMoods:      weekCheckins.map(c => c.mood_key),
     journalCount:   weekJournals.length,
-    journalExcerpt: latestJournal ? firstLine(latestJournal) : null,
+    journalExcerpt: latestJournal ? firstLine(latestJournal, 48) : null,
     streak,
   })
   const dateRange = thaiDateRange(sevenDaysAgoBK, todayBK)
