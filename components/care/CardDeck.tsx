@@ -8,18 +8,18 @@ type Phase = 'shuffle' | 'select' | 'revealing'
 
 const CARD_COUNT = 7
 
-// Tight stack offsets during shuffle phase
-const SHUFFLE_OFFSETS = [
-  { x: -7, rotate: -8 },
+// Tight overlapping stack — visible before the fan spreads
+const STACK_POSITIONS = [
+  { x: -6, rotate: -7 },
   { x:  4, rotate:  5 },
-  { x: -3, rotate: -3 },
-  { x:  5, rotate:  7 },
-  { x: -4, rotate: -5 },
-  { x:  3, rotate:  4 },
-  { x: -1, rotate: -2 },
+  { x: -2, rotate: -3 },
+  { x:  5, rotate:  6 },
+  { x: -3, rotate: -5 },
+  { x:  3, rotate:  3 },
+  { x: -1, rotate: -1 },
 ]
 
-// Spread fan positions
+// Fan spread — 168px total span, safe on 320px+ screens
 const FAN_POSITIONS = [
   { x: -84, rotate: -15, z: 1 },
   { x: -56, rotate: -10, z: 2 },
@@ -30,9 +30,7 @@ const FAN_POSITIONS = [
   { x:  84, rotate:  15, z: 1 },
 ]
 
-type Props = {
-  action: () => Promise<void>
-}
+type Props = { action: () => Promise<void> }
 
 export default function CardDeck({ action }: Props) {
   const [phase, setPhase] = useState<Phase>('shuffle')
@@ -44,11 +42,11 @@ export default function CardDeck({ action }: Props) {
   useEffect(() => {
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     if (reduced) {
-      // Skip shuffle — go straight to select in the next tick
       const t = setTimeout(() => { setSpread(true); setPhase('select') }, 0)
       return () => clearTimeout(t)
     }
-    const t1 = setTimeout(() => setSpread(true), 250)
+    // Shuffle bob: 0–1200ms → fan out → selectable at 1650ms
+    const t1 = setTimeout(() => setSpread(true),   1200)
     const t2 = setTimeout(() => setPhase('select'), 1650)
     return () => { clearTimeout(t1); clearTimeout(t2) }
   }, [])
@@ -59,13 +57,12 @@ export default function CardDeck({ action }: Props) {
     setPhase('revealing')
     setTimeout(() => {
       startTransition(async () => { await action() })
-    }, 500)
+    }, 600)
   }
 
   const subtitle =
-    phase === 'shuffle'    ? '' :
-    phase === 'revealing'  ? 'กำลังเปิดการ์ด...' :
-                             'แล้วเลือกการ์ดที่รู้สึกว่าเรียกคุณ'
+    phase === 'revealing' ? 'กำลังเปิดการ์ด...' :
+    phase === 'select'    ? 'เลือกการ์ดที่รู้สึกว่าเรียกคุณ' : ''
 
   return (
     <div className="space-y-14">
@@ -75,26 +72,25 @@ export default function CardDeck({ action }: Props) {
           หายใจลึก ๆ สักครั้ง
         </h1>
         <p
-          className="text-muted font-light leading-8 min-h-[2rem] transition-opacity duration-500"
+          className="text-muted font-light leading-8 min-h-[2rem] transition-opacity duration-700"
           style={{ opacity: phase === 'shuffle' ? 0 : 1 }}
         >
           {subtitle}
         </p>
       </div>
 
-      {/* Card fan — h-36 = 144px, enough for 88px card + 32px lift + scale margin */}
-      <div className="relative h-36 flex items-end justify-center">
+      {/* h-40 = 160px: 88px card + 40px max lift + 32px breathing room */}
+      <div className="relative h-40 flex items-end justify-center">
         {Array.from({ length: CARD_COUNT }, (_, i) => {
           const fan = FAN_POSITIONS[i]
-          const shuffle = SHUFFLE_OFFSETS[i]
-          const pos = spread ? fan : shuffle
+          const pos = spread ? fan : STACK_POSITIONS[i]
 
-          const isSelected = selectedIndex === i
+          const isSelected  = selectedIndex === i
           const isUnselected = selectedIndex !== null && !isSelected
-          const isHovered = hoveredIndex === i && phase === 'select' && !isSelected
+          const isHovered   = hoveredIndex === i && phase === 'select' && !isSelected
 
-          const ty  = isSelected ? -32 : isHovered ? -10 : 0
-          const scl = isSelected ? 1.12 : isHovered ? 1.05 : isUnselected ? 0.94 : 1
+          const ty  = isSelected ? -40 : isHovered ? -12 : 0
+          const scl = isSelected ? 1.15 : isHovered ? 1.06 : isUnselected ? 0.92 : 1
 
           return (
             <button
@@ -109,13 +105,28 @@ export default function CardDeck({ action }: Props) {
                 position: 'absolute',
                 bottom: 0,
                 transform: `translateX(${pos.x}px) translateY(${ty}px) rotate(${pos.rotate}deg) scale(${scl})`,
-                zIndex: isSelected ? 20 : spread ? fan.z : 1,
-                transition: 'transform 0.5s cubic-bezier(0.34, 1.1, 0.64, 1), opacity 0.25s ease',
-                opacity: isUnselected ? 0.32 : 1,
+                zIndex: isSelected ? 20 : spread ? fan.z : i + 1,
+                transition: 'transform 0.55s cubic-bezier(0.34, 1.1, 0.64, 1), opacity 0.3s ease',
+                opacity: isUnselected ? 0.28 : 1,
               }}
               className={`rounded-2xl ${focusRing}`}
             >
-              <CardBack className="w-14 h-[88px]" />
+              {/*
+               * Inner wrapper carries the shuffle bob animation.
+               * Kept separate so it doesn't conflict with the outer
+               * position/rotation transform on the button.
+               * transition: smoothly returns to Y=0 when animation is removed.
+               */}
+              <div
+                style={{
+                  transition: 'transform 0.4s ease',
+                  animation: spread
+                    ? 'none'
+                    : `care-shuffle-bob 0.9s ease-in-out ${i * 90}ms infinite`,
+                }}
+              >
+                <CardBack className="w-14 h-[88px]" />
+              </div>
             </button>
           )
         })}

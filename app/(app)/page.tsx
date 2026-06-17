@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { generateWeeklyReflection, getPreviousWeekBounds } from '@/lib/services/weeklyReflection'
 import { extractMemories, type ExtractedMemory } from '@/lib/services/memoryExtractor'
+import { getMissYouState } from '@/lib/services/missYou'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -22,6 +23,10 @@ type CardJoin = { title_th: string; body_th: string; card_categories: { name_th:
 type ReadingHistoryJoin = { ritual_cards: CardJoin | null }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
+
+function toBK(ts: string): string {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Bangkok' }).format(new Date(ts))
+}
 
 function truncate(text: string, max = 120) {
   return text.length <= max ? text : text.slice(0, max).trimEnd() + '…'
@@ -128,6 +133,13 @@ export default async function HomePage() {
     latestCard,
   }
 
+  // Miss You — derive from most recent checkin in the memCheckins result
+  const now = new Date()
+  const todayBK = toBK(now.toISOString())
+  const lastCheckinTs = memCheckinsResult.data?.[0]?.checked_in_at ?? null
+  const lastCheckinBK = lastCheckinTs ? toBK(lastCheckinTs) : null
+  const missYou = getMissYouState(lastCheckinBK, todayBK)
+
   // Weekly reflection from previous week's real data
   const weekReflection = generateWeeklyReflection({
     checkins: weekCheckinsResult.data ?? [],
@@ -141,7 +153,7 @@ export default async function HomePage() {
     checkins: memCheckinsResult.data ?? [],
   })
   const topMemory: ExtractedMemory | null = memories[memories.length - 1] ?? null
-  const hour = new Date().getHours()
+  const hour = now.getHours()
 
   return (
     <div className="max-w-md mx-auto px-6 py-10 pb-32 space-y-6">
@@ -154,6 +166,17 @@ export default async function HomePage() {
         </h1>
         <p className="text-muted font-light leading-7">วันนี้เป็นอย่างไรบ้าง</p>
       </header>
+
+      {/* ── Miss You ───────────────────────────────────────────────────────── */}
+      {missYou.shouldShow && (
+        <section className="rounded-3xl border border-sand bg-white/60 px-6 py-5 space-y-1.5">
+          <p className="text-xs tracking-[0.2em] uppercase text-brown font-light">ยินดีต้อนรับกลับมา</p>
+          <p className="text-sm font-light text-ink leading-8">{missYou.message}</p>
+          {missYou.sub && (
+            <p className="text-xs text-muted font-light">{missYou.sub}</p>
+          )}
+        </section>
+      )}
 
       {/* ── 2. Streak ──────────────────────────────────────────────────────── */}
       <section className="rounded-3xl border border-sand bg-white/40 px-6 py-6">
@@ -294,6 +317,7 @@ export default async function HomePage() {
         <p className="text-xs tracking-[0.2em] uppercase text-brown font-light px-1">สำรวจ</p>
         <div className="grid grid-cols-2 gap-2">
           {[
+            { href: '/diary',    label: 'บันทึก Care' },
             { href: '/growth',   label: 'การเติบโต' },
             { href: '/memory',   label: 'ความทรงจำ' },
             { href: '/profile',  label: 'โปรไฟล์' },

@@ -73,6 +73,12 @@ body {
   animation: care-back-breathe 2.5s ease-in-out infinite;
 }
 
+/* Deck shuffle: each card bobs up slightly, staggered to create a ripple */
+@keyframes care-shuffle-bob {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-5px); }
+}
+
 /* Whisper: each phrase fades in, holds, then fades out */
 @keyframes care-whisper {
   0%   { opacity: 0; transform: translateY(5px); }
