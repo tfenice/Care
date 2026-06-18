@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { generateWeeklyReflection, getWeekBounds } from '@/lib/services/weeklyReflection'
+import { toBangkokDate } from '@/lib/utils'
 import PageShell from '@/components/ui/PageShell'
 import PageHeader from '@/components/ui/PageHeader'
 import SurfaceCard from '@/components/ui/SurfaceCard'
@@ -15,10 +16,6 @@ const MOOD_DOT: Record<string, string> = {
 }
 
 const THAI_DAY = ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'] // index 0 = Sunday
-
-function toBK(ts: string): string {
-  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Bangkok' }).format(new Date(ts))
-}
 
 function gentleInterpretation(streak: number, dominant: string | null, checkinPct: number): string {
   const lines: string[] = []
@@ -103,21 +100,21 @@ export default async function GrowthPage() {
   const recentCheckins = recentCheckinsResult.data ?? []
 
   // ── 30-day activity grid ───────────────────────────────────────────────────
-  const checkinDateSet = new Set(recentCheckins.map(c => toBK(c.checked_in_at)))
+  const checkinDateSet = new Set(recentCheckins.map(c => toBangkokDate(c.checked_in_at)))
   const last30 = Array.from({ length: 30 }, (_, i) => {
     const d = new Date(now.getTime() - (29 - i) * 86_400_000)
-    return checkinDateSet.has(toBK(d.toISOString()))
+    return checkinDateSet.has(toBangkokDate(d.toISOString()))
   })
 
   // ── 7-day mood timeline ────────────────────────────────────────────────────
   const moodByDate = new Map<string, string>()
   for (const c of recentCheckins) {
-    const bkDate = toBK(c.checked_in_at)
+    const bkDate = toBangkokDate(c.checked_in_at)
     if (!moodByDate.has(bkDate)) moodByDate.set(bkDate, c.mood_key)
   }
   const last7 = Array.from({ length: 7 }, (_, i) => {
     const d = new Date(now.getTime() - (6 - i) * 86_400_000)
-    const bkDate = toBK(d.toISOString())
+    const bkDate = toBangkokDate(d.toISOString())
     const dow = new Date(bkDate + 'T00:00:00Z').getUTCDay()
     return { day: THAI_DAY[dow], mood: moodByDate.get(bkDate) ?? null }
   })
@@ -134,7 +131,7 @@ export default async function GrowthPage() {
   // ── Current week reflection ────────────────────────────────────────────────
   const weekCheckins = recentCheckins
     .filter(c => {
-      const bkDate = toBK(c.checked_in_at)
+      const bkDate = toBangkokDate(c.checked_in_at)
       return bkDate >= currBounds.start && bkDate <= currBounds.end
     })
     .map(c => ({ mood_key: c.mood_key, note: c.note }))

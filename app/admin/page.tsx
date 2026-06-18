@@ -7,15 +7,12 @@
 
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { toBangkokDate } from '@/lib/utils'
 
 // Join shape: reading_history → ritual_cards → card_categories
 type CardHistoryRow = {
   read_at: string
   ritual_cards: { card_categories: { name_th: string } | null } | null
-}
-
-function toBK(ts: string): string {
-  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Bangkok' }).format(new Date(ts))
 }
 
 function StatCard({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
@@ -71,16 +68,16 @@ export default async function AdminPage() {
   ])
 
   const now             = new Date()
-  const todayBK         = toBK(now.toISOString())
-  const sevenDaysAgoBK  = toBK(new Date(now.getTime() - 6 * 86_400_000).toISOString())
+  const todayBK         = toBangkokDate(now.toISOString())
+  const sevenDaysAgoBK  = toBangkokDate(new Date(now.getTime() - 6 * 86_400_000).toISOString())
 
   const recentCheckins = recentCheckinsResult.data ?? []
   const recentJournals = recentJournalsResult.data ?? []
   const rawCards       = (recentCardsResult.data ?? []) as unknown as CardHistoryRow[]
 
   // DAU/WAU (private beta = 1 user)
-  const dau = recentCheckins.some(c => toBK(c.checked_in_at) === todayBK) ? 1 : 0
-  const wau = recentCheckins.some(c => toBK(c.checked_in_at) >= sevenDaysAgoBK) ? 1 : 0
+  const dau = recentCheckins.some(c => toBangkokDate(c.checked_in_at) === todayBK) ? 1 : 0
+  const wau = recentCheckins.some(c => toBangkokDate(c.checked_in_at) >= sevenDaysAgoBK) ? 1 : 0
 
   // Mood frequency
   const moodFrequency: Record<string, number> = {}
@@ -111,15 +108,15 @@ export default async function AdminPage() {
   // 7-day daily stats
   const dailyStats = Array.from({ length: 7 }, (_, i) => {
     const d    = new Date(now.getTime() - (6 - i) * 86_400_000)
-    const date = toBK(d.toISOString())
+    const date = toBangkokDate(d.toISOString())
     return {
       date,
-      checkins:    recentCheckins.filter(c => toBK(c.checked_in_at) === date).length,
-      journals:    recentJournals.filter(j => toBK(j.created_at)    === date).length,
-      cardsDrawn:  rawCards.filter(c => toBK(c.read_at) === date).length,
+      checkins:    recentCheckins.filter(c => toBangkokDate(c.checked_in_at) === date).length,
+      journals:    recentJournals.filter(j => toBangkokDate(j.created_at)    === date).length,
+      cardsDrawn:  rawCards.filter(c => toBangkokDate(c.read_at) === date).length,
       activeUsers: (
-        recentCheckins.some(c => toBK(c.checked_in_at) === date) ||
-        recentJournals.some(j => toBK(j.created_at) === date)
+        recentCheckins.some(c => toBangkokDate(c.checked_in_at) === date) ||
+        recentJournals.some(j => toBangkokDate(j.created_at) === date)
       ) ? 1 : 0,
     }
   })

@@ -4,13 +4,10 @@ import { createClient } from '@/lib/supabase/server'
 import { generateCareLetter, firstLine } from '@/lib/services/careLetter'
 import { getOnThisDay, MILESTONES } from '@/lib/services/onThisDay'
 import { getMissYouState } from '@/lib/services/missYou'
+import { toBangkokDate } from '@/lib/utils'
 import PageShell from '@/components/ui/PageShell'
 import PageHeader from '@/components/ui/PageHeader'
 import SurfaceCard from '@/components/ui/SurfaceCard'
-
-function toBK(ts: string): string {
-  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Bangkok' }).format(new Date(ts))
-}
 
 function thaiDateRange(startISO: string, endISO: string): string {
   const THAI_MONTHS = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.',
@@ -27,9 +24,9 @@ export default async function DiaryPage() {
   if (!user) redirect('/login')
 
   const now = new Date()
-  const todayBK = toBK(now.toISOString())
+  const todayBK = toBangkokDate(now.toISOString())
   const sevenDaysAgo = new Date(now.getTime() - 7 * 86_400_000)
-  const sevenDaysAgoBK = toBK(sevenDaysAgo.toISOString())
+  const sevenDaysAgoBK = toBangkokDate(sevenDaysAgo.toISOString())
 
   // Each milestone window spans ±2 days around the exact date
   // so a journal written slightly before or after the milestone is still surfaced.
@@ -37,8 +34,8 @@ export default async function DiaryPage() {
     const exactMs = now.getTime() - m.daysAgo * 86_400_000
     return {
       daysAgo: m.daysAgo,
-      startDate: toBK(new Date(exactMs - 2 * 86_400_000).toISOString()),
-      endDate:   toBK(new Date(exactMs + 2 * 86_400_000).toISOString()),
+      startDate: toBangkokDate(new Date(exactMs - 2 * 86_400_000).toISOString()),
+      endDate:   toBangkokDate(new Date(exactMs + 2 * 86_400_000).toISOString()),
     }
   })
 
@@ -100,7 +97,7 @@ export default async function DiaryPage() {
 
   // ── Miss You ────────────────────────────────────────────────────────────────
   const lastCheckinBK = lastCheckinResult.data?.checked_in_at
-    ? toBK(lastCheckinResult.data.checked_in_at)
+    ? toBangkokDate(lastCheckinResult.data.checked_in_at)
     : null
   const missYou = getMissYouState(lastCheckinBK, todayBK)
 

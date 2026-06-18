@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { UUID_RE } from '@/lib/utils'
+import { UUID_RE, formatCardCode } from '@/lib/utils'
 import { getCategoryToken } from '@/lib/card-tokens'
 import { CardSignature } from '@/components/care/CardSignature'
 import ChapterCard from '@/components/care/ChapterCard'
@@ -57,7 +57,7 @@ export default async function CollectionCardPage({
 
   const category = card.card_categories?.name_th ?? 'ไม่ทราบหมวด'
   const token = getCategoryToken(category)
-  const code = `${token.code}-${String(card.sort_order).padStart(2, '0')}`
+  const code = formatCardCode(token.code, card.sort_order)
 
   if (historyResult.error) {
     console.error('[CollectionCardPage] reading_history query failed:', historyResult.error.message)

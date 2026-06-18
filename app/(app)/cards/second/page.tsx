@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { UUID_RE, toBangkokDate, formatBangkokDisplay } from '@/lib/utils'
+import { UUID_RE, toBangkokDate, formatBangkokDisplay, formatCardCode } from '@/lib/utils'
 import { getCategoryToken } from '@/lib/card-tokens'
 import { getSecondPageContent } from '@/lib/card-second-page'
 import { SecondPage } from '@/components/care/SecondPage'
@@ -70,7 +70,7 @@ export default async function SecondPageRoute({
   const category = card.card_categories?.name_th ?? 'CARE'
   const token = getCategoryToken(category)
   const code = card.sort_order
-    ? `${token.code}-${String(card.sort_order).padStart(2, '0')}`
+    ? formatCardCode(token.code, card.sort_order)
     : null
 
   const content = getSecondPageContent(code, category)
