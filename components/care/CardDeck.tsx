@@ -106,7 +106,7 @@ export default function CardDeck({ action }: Props) {
                 bottom: 0,
                 transform: `translateX(${pos.x}px) translateY(${ty}px) rotate(${pos.rotate}deg) scale(${scl})`,
                 zIndex: isSelected ? 20 : spread ? fan.z : i + 1,
-                transition: 'transform 0.55s cubic-bezier(0.34, 1.1, 0.64, 1), opacity 0.3s ease',
+                transition: 'transform var(--dur-settle) var(--ease-settle), opacity var(--dur-brief) var(--ease-settle)',
                 opacity: isUnselected ? 0.28 : 1,
               }}
               className={`rounded-2xl ${focusRing}`}

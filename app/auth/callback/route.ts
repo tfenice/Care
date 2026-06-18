@@ -36,11 +36,11 @@ export async function GET(request: NextRequest) {
 
   const { error } = await supabase.auth.exchangeCodeForSession(code)
   if (error) {
+    // Log raw details server-side only — never forward to browser URL.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const detail = `name=${error.name}|msg=${error.message}|status=${(error as any).status}|code=${(error as any).code}`
-    console.error('[auth/callback] exchange error:', detail)
+    console.error('[auth/callback] exchange error:', `name=${error.name}|msg=${error.message}|status=${(error as any).status}|code=${(error as any).code}`)
     return NextResponse.redirect(
-      new URL(`/login?error=${encodeURIComponent(detail)}`, origin)
+      new URL('/login?error=link_invalid', origin)
     )
   }
 

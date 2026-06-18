@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { getCategoryToken } from '@/lib/card-tokens'
 import { CardSignature } from '@/components/care/CardSignature'
-import CardFace from '@/components/care/CardFace'
+import ChapterCard from '@/components/care/ChapterCard'
 import PageShell from '@/components/ui/PageShell'
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
@@ -94,7 +94,7 @@ export default async function CollectionCardPage({
 
       {seen ? (
         <>
-          <CardFace
+          <ChapterCard
             category={category}
             titleTh={card.title_th}
             bodyTh={card.body_th}

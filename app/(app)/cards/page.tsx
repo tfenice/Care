@@ -132,6 +132,7 @@ export default async function CardsPage({
             bodyTh={card.body_th}
             reflectionPromptTh={card.reflection_prompt_th}
             sortOrder={card.sort_order}
+            cardId={cardId}
           />
         </div>
       </div>

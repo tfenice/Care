@@ -25,6 +25,85 @@
   --color-presence-rgb: 184 137 42;
   --color-hope-rgb: 95 122 101;
   --color-growth-rgb: 139 111 78;
+
+  /* ── Care Paper Language System ────────────────────────────────────────────
+   *
+   * Everything inherits from the same notebook.
+   * Reference: docs/PAPER_LANGUAGE.md
+   *
+   * ── Paper tones ──────────────────────────────────────────────────────── */
+
+  --paper-1: #F7F0E6;           /* warm ivory   — surface highlight zone   */
+  --paper-2: #EDE0CC;           /* natural paper — body zone                */
+  --paper-3: #E3D1B5;           /* aged paper    — deep/shadow zone         */
+  --paper-back-1: #F7F1E8;      /* card back     — lightest ivory           */
+  --paper-back-2: #EDE0CC;      /* card back     — mid tone                 */
+  --paper-back-3: #E4D5BC;      /* card back     — warm shadow              */
+
+  /* ── Paper grain ─────────────────────────────────────────────────────── */
+
+  --grain-color: rgba(139, 111, 78, 0.09);   /* warm dot grain              */
+  --grain-size: 5px;                          /* dot repeat interval         */
+  --grain-dot: 0.5px;                         /* dot radius                  */
+
+  /* ── Paper surface ───────────────────────────────────────────────────── */
+
+  --paper-border:        rgba(201, 169, 122, 0.22);   /* outer card border   */
+  --paper-border-inner:  rgba(201, 169, 122, 0.18);   /* inner frame         */
+  --paper-border-soft:   rgba(201, 169, 122, 0.10);   /* section dividers    */
+  --paper-border-faint:  rgba(201, 169, 122, 0.06);   /* barely-there mark   */
+
+  --paper-radius-card:   1.5rem;    /* 24px  — card face, card back         */
+  --paper-radius-inner:  1.25rem;   /* 20px  — inner frame                  */
+  --paper-radius-soft:   1rem;      /* 16px  — inputs, chips                */
+  --paper-radius-pill:   9999px;    /* category pills, tags                 */
+
+  /* Shadows — no pure black; all tinted with warm paper brown */
+  --paper-shadow-lift:
+    0 16px 48px rgba(80, 52, 20, 0.12),
+    0  2px  8px rgba(80, 52, 20, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.52);
+
+  --paper-shadow-rest:
+    0  4px 18px rgba(80, 52, 20, 0.10),
+    inset 0 1px 0 rgba(255, 255, 255, 0.45);
+
+  --paper-shadow-page:
+    0  8px 32px rgba(80, 52, 20, 0.08),
+    0  1px  4px rgba(80, 52, 20, 0.04);
+
+  /* ── Ink system ──────────────────────────────────────────────────────── */
+  /* Ink is never pure black. It carries warmth from the paper beneath.    */
+
+  --ink-1: #1E1F1C;                     /* primary body   — 100% ink        */
+  --ink-2: rgba(30, 31, 28, 0.72);      /* secondary      — supporting text */
+  --ink-3: rgba(30, 31, 28, 0.45);      /* tertiary       — captions, meta  */
+  --ink-4: rgba(30, 31, 28, 0.20);      /* trace          — faint marks     */
+  --ink-brown: #8B6F4E;                 /* warm brown     — headings, marks  */
+  --ink-muted: #6D735B;                 /* muted sage     — secondary prose  */
+  --ink-copper: rgba(139, 111, 78, 0.55); /* antique copper — decorative    */
+
+  /* ── Motion ──────────────────────────────────────────────────────────── */
+  /* Physical paper metaphors. No spring, bounce, overshoot, or zoom.      */
+
+  --ease-settle:   cubic-bezier(0.25, 0.46, 0.45, 0.94);  /* ink settling   */
+  --ease-ink:      cubic-bezier(0.16, 1.00, 0.30, 1.00);  /* ink absorbing  */
+  --ease-dissolve: cubic-bezier(0.55, 0.00, 1.00, 0.45);  /* paper fading   */
+  --ease-drift:    cubic-bezier(0.36, 0.07, 0.19, 0.97);  /* paper weight   */
+
+  --dur-micro:    0.15s;   /* micro feedback     — hover, tap              */
+  --dur-brief:    0.28s;   /* brief transition   — small state changes     */
+  --dur-settle:   0.55s;   /* paper settling     — element appearances     */
+  --dur-page:     0.80s;   /* page transition    — surface changes         */
+  --dur-ink:      1.00s;   /* ink appearing      — text, long reveals      */
+  --dur-slow:     1.40s;   /* slow reveal        — meditation, card back   */
+
+  /* ── Typography spacing ─────────────────────────────────────────────── */
+  /* Three tracking registers, used consistently across all surfaces.      */
+
+  --track-word:   0.01em;    /* body text — natural reading tracking       */
+  --track-mark:   0.20em;    /* category labels, section headers           */
+  --track-stamp:  0.28em;    /* codes, letterpress marks, metadata         */
 }
 
 /* ── Base ─────────────────────────────────────────────────────────────────── */
@@ -44,13 +123,15 @@ body {
 }
 
 /* ── Card animations ───────────────────────────────────────────────────────── */
+
+/* Paper settling: no overshoot, no bounce — physical weight landing */
 @keyframes care-card-in {
   from { opacity: 0; transform: translateY(18px) scale(0.97); }
   to   { opacity: 1; transform: translateY(0)    scale(1);    }
 }
 
 .care-card-in {
-  animation: care-card-in 0.55s cubic-bezier(0.34, 1.1, 0.64, 1) both;
+  animation: care-card-in var(--dur-settle) var(--ease-settle) both;
 }
 
 /* Staggered reveal for card face sections */
@@ -60,7 +141,39 @@ body {
 }
 
 .care-section-in {
-  animation: care-section-in 0.45s ease-out both;
+  animation: care-section-in var(--dur-settle) var(--ease-ink) both;
+}
+
+/* ── Paper Language System animations ─────────────────────────────────────── */
+
+/* Pure opacity reveal — ink absorbing into paper. No transform. */
+@keyframes care-ink-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.care-ink-in {
+  animation: care-ink-in var(--dur-ink) var(--ease-ink) both;
+}
+
+/* Gentle settle from 6px above — a page being placed on a surface */
+@keyframes care-paper-settle {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0);   }
+}
+
+.care-paper-settle {
+  animation: care-paper-settle var(--dur-page) var(--ease-settle) both;
+}
+
+/* Page-level enter: 10px drift, no scale — the whole surface slides into place */
+@keyframes care-page-enter {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0);    }
+}
+
+.care-page-enter {
+  animation: care-page-enter var(--dur-page) var(--ease-settle) both;
 }
 
 /* Card back breathes while the user pauses before reveal */
@@ -86,3 +199,65 @@ body {
   72%  { opacity: 1; transform: translateY(0);   }
   100% { opacity: 0; transform: translateY(-3px);}
 }
+
+/* ── Illustration motion ──────────────────────────────────────────────────── */
+/* Category-specific. Plays once. Holds final state (fill: both).            */
+/* No bounce, no overshoot, no loops. Cancelled by prefers-reduced-motion.   */
+
+/* Acceptance — stone settling, weight finding ground */
+@keyframes care-illus-settle {
+  from { opacity: 0; transform: translateY(5px); }
+  to   { opacity: 1; transform: translateY(0);   }
+}
+
+/* Presence — one breath releasing, center becoming visible */
+@keyframes care-illus-breathe {
+  from { opacity: 0; transform: scale(1.020); }
+  to   { opacity: 1; transform: scale(1);     }
+}
+
+/* Hope — light arriving, air becoming clearer */
+@keyframes care-illus-open {
+  from { opacity: 0; transform: translateY(7px); }
+  to   { opacity: 1; transform: translateY(0);   }
+}
+
+/* Growth — organic emergence, root finding form */
+@keyframes care-illus-emerge {
+  from { opacity: 0; transform: translateY(11px); }
+  to   { opacity: 1; transform: translateY(0);    }
+}
+
+/* Acceptance (A) — dur-ink: 1s, ease-settle */
+.care-illus-a {
+  animation: care-illus-settle var(--dur-ink) var(--ease-settle) both;
+}
+/* Presence (P) — dur-ink: 1s, ease-settle */
+.care-illus-p {
+  animation: care-illus-breathe var(--dur-ink) var(--ease-settle) both;
+}
+/* Hope (H) — 1.2s, ease-ink (ink absorbing, slower and softer) */
+.care-illus-h {
+  animation: care-illus-open calc(var(--dur-ink) * 1.2) var(--ease-ink) both;
+}
+/* Growth (G) — 1.5s, ease-settle (slowest — organic rhythm) */
+.care-illus-g {
+  animation: care-illus-emerge calc(var(--dur-ink) * 1.5) var(--ease-settle) both;
+}
+
+/* Honour the reader's motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .care-card-in,
+  .care-section-in,
+  .care-ink-in,
+  .care-paper-settle,
+  .care-page-enter,
+  .care-back-breathe,
+  .care-illus-a,
+  .care-illus-p,
+  .care-illus-h,
+  .care-illus-g {
+    animation: none;
+  }
+}
+

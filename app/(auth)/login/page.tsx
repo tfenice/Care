@@ -8,8 +8,9 @@ import EntryWhisper from "@/components/care/EntryWhisper";
 // Raw error details are logged server-side only — never put in URLs.
 function toUserMessage(raw: string | null): string | null {
   if (!raw) return null
-  if (raw === 'send_failed') return 'ส่งลิงก์ไม่ได้ในขณะนี้ ลองอีกครั้งสักครู่'
-  if (raw === 'config')      return 'การตั้งค่าระบบผิดพลาด กรุณาติดต่อผู้ดูแล'
+  if (raw === 'send_failed')   return 'ส่งลิงก์ไม่ได้ในขณะนี้ ลองอีกครั้งสักครู่'
+  if (raw === 'config')        return 'การตั้งค่าระบบผิดพลาด กรุณาติดต่อผู้ดูแล'
+  if (raw === 'link_invalid')  return 'ลิงก์นี้ใช้ไม่ได้แล้ว ลองขอลิงก์ใหม่ได้นะ'
   return 'มีบางอย่างผิดพลาด ลองอีกครั้งได้นะ'
 }
 
