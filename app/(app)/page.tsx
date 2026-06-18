@@ -1,9 +1,10 @@
-import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { toBangkokDate, excerptText } from '@/lib/utils'
 import { extractMemories, type ExtractedMemory } from '@/lib/services/memoryExtractor'
 import { getMissYouState } from '@/lib/services/missYou'
 import PrimaryButton from '@/components/ui/PrimaryButton'
+import QuietLink from '@/components/ui/QuietLink'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -12,14 +13,6 @@ type CardJoin = { title_th: string; body_th: string; card_categories: { name_th:
 type ReadingHistoryJoin = { ritual_cards: CardJoin | null }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-
-function toBK(ts: string): string {
-  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Bangkok' }).format(new Date(ts))
-}
-
-function truncate(text: string, max = 100) {
-  return text.length <= max ? text : text.slice(0, max).trimEnd() + '…'
-}
 
 function formatThaiDate(date: Date): string {
   return new Intl.DateTimeFormat('th-TH', {
@@ -101,18 +94,6 @@ function CategoryLabel({ children }: { children: React.ReactNode }) {
   )
 }
 
-function QuietLink({ href, children }: { href: string; children: React.ReactNode }) {
-  return (
-    <Link
-      href={href}
-      className="inline-block text-xs font-light underline underline-offset-4 hover:opacity-60 transition-opacity"
-      style={{ color: 'var(--ink-brown)' }}
-    >
-      {children}
-    </Link>
-  )
-}
-
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default async function HomePage() {
@@ -121,7 +102,7 @@ export default async function HomePage() {
   if (!user) redirect('/login')
 
   const now = new Date()
-  const todayBK = toBK(now.toISOString())
+  const todayBK = toBangkokDate(now)
 
   const [
     profileResult,
@@ -154,7 +135,7 @@ export default async function HomePage() {
   const latestJournal = latestJournalResult.data?.[0] ?? null
 
   const lastCheckinTs = memCheckinsResult.data?.[0]?.checked_in_at ?? null
-  const lastCheckinBK = lastCheckinTs ? toBK(lastCheckinTs) : null
+  const lastCheckinBK = lastCheckinTs ? toBangkokDate(lastCheckinTs) : null
   const missYou = getMissYouState(lastCheckinBK, todayBK)
 
   const memories = extractMemories({
@@ -171,7 +152,10 @@ export default async function HomePage() {
     return (
       <div className="care-page-enter max-w-md mx-auto px-6 pt-12 pb-32 space-y-8">
 
-        <DateStamp date={thaiDate} />
+        <div className="flex items-center justify-between">
+          <DateStamp date={thaiDate} />
+          <QuietLink href="/profile">บัญชี</QuietLink>
+        </div>
 
         {/* Opening invitation — the first page of the book */}
         <section className="relative overflow-hidden px-8 py-10 space-y-6" style={paperLift}>
@@ -238,7 +222,10 @@ export default async function HomePage() {
 
         {/* Today's header — a page opening */}
         <header className="space-y-2 pt-2">
-          <DateStamp date={thaiDate} />
+          <div className="flex items-center justify-between">
+            <DateStamp date={thaiDate} />
+            <QuietLink href="/profile">บัญชี</QuietLink>
+          </div>
           <h1 className="text-xl font-light leading-9" style={{ color: 'var(--ink-1)' }}>
             {greeting}
           </h1>
@@ -259,7 +246,7 @@ export default async function HomePage() {
                 {latestCard.titleTh}
               </p>
               <p className="text-sm font-light leading-7" style={{ color: 'var(--ink-2)' }}>
-                {truncate(latestCard.bodyTh, 80)}
+                {excerptText(latestCard.bodyTh, 80)}
               </p>
               <QuietLink href="/cards">การ์ดที่เคยเดินทางมาหาคุณ</QuietLink>
             </div>
@@ -272,7 +259,7 @@ export default async function HomePage() {
             <>
               <SectionLabel>สิ่งที่ถูกเขียนไว้</SectionLabel>
               <p className="text-sm font-light leading-7" style={{ color: 'var(--ink-2)' }}>
-                {truncate(latestJournal.body, 100)}
+                {excerptText(latestJournal.body, 100)}
               </p>
               <QuietLink href="/journal">กลับไปอ่าน</QuietLink>
             </>
@@ -327,7 +314,10 @@ export default async function HomePage() {
   return (
     <div className="care-page-enter max-w-md mx-auto px-6 pt-16 pb-32 space-y-10">
 
-      <DateStamp date={thaiDate} />
+      <div className="flex items-center justify-between">
+        <DateStamp date={thaiDate} />
+        <QuietLink href="/profile">บัญชี</QuietLink>
+      </div>
 
       <p className="text-xl font-light leading-10" style={{ color: 'var(--ink-1)' }}>
         {companionLine}

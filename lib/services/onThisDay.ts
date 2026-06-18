@@ -1,6 +1,8 @@
 // Pure function — finds journal excerpts from milestone dates.
 // Caller fetches the journal entries; this function filters and shapes them.
 
+import { excerptText } from '@/lib/utils'
+
 export const MILESTONES = [
   { daysAgo: 30,  label: '1 เดือนที่แล้ว' },
   { daysAgo: 90,  label: '3 เดือนที่แล้ว' },
@@ -32,13 +34,4 @@ export function getOnThisDay(entries: MilestoneEntry[]): DayMemory[] {
       label: labelMap[e.daysAgo] ?? `${e.daysAgo} วันที่แล้ว`,
       excerpt: excerptText(e.body!, 80),
     }))
-}
-
-function excerptText(text: string, max: number): string {
-  const trimmed = text.trim()
-  // Break at first real newline (paragraph break) if it's short enough
-  const nl = trimmed.indexOf('\n')
-  if (nl > 0 && nl <= 80) return trimmed.slice(0, nl).trimEnd()
-  if (trimmed.length <= max) return trimmed
-  return trimmed.slice(0, max).trimEnd() + '…'
 }

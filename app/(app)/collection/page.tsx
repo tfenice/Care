@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { formatCardCode } from '@/lib/utils'
 import { getCategoryToken } from '@/lib/card-tokens'
 import { CategorySymbol } from '@/components/care/card-symbols'
 import { CardSignature } from '@/components/care/CardSignature'
@@ -124,7 +125,7 @@ export default async function CollectionPage() {
     if (!cat) continue
 
     const token = getCategoryToken(cat.name_th)
-    const code = `${token.code}-${String(card.sort_order).padStart(2, '0')}`
+    const code = formatCardCode(token.code, card.sort_order)
     const entry: CardEntry = {
       id: card.id,
       code,

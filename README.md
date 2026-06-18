@@ -80,17 +80,19 @@ app/
   (app)/history/      30-day history view
   (app)/growth/       Streak + mood timeline
   (app)/memory/       Care's pattern observations
-  (app)/profile/      Account and stats
+  (app)/profile/      Account and stats (Your Book)
   (app)/settings/     Privacy and preferences
   admin/              Founder-only analytics
   preview/            Card system visual specification (founder-only)
 lib/actions/          Server Actions (auth, checkin, cards, journal)
 lib/supabase/         Supabase client helpers (server + browser)
 lib/services/         Deterministic engines (reflection, memory extractor)
-lib/demo/             Demo fixture data (replace with real queries at launch)
-components/care/      Shared UI components
+lib/utils.ts          Shared utilities (Bangkok date, UUID, card code, excerpt)
+lib/card-domain.ts    Card domain utilities (id validation, code formatting)
+components/care/      Care-specific components (cards, illustrations, nav)
+components/ui/        Shared primitives (PaperSurface, Eyebrow, QuietLink, EmptyState, …)
 supabase/migrations/  SQL migrations (run in order)
-types/                TypeScript types (database schema, models)
+types/                TypeScript types (database schema)
 docs/                 Architecture, voice guide, known tech debt
 ```
 

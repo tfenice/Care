@@ -1,11 +1,10 @@
 import { redirect } from 'next/navigation'
 import { drawCard } from '@/lib/actions/cards'
 import { createClient } from '@/lib/supabase/server'
+import { UUID_RE, toBangkokDate } from '@/lib/utils'
 import CardDeck from '@/components/care/CardDeck'
 import CardReveal from '@/components/care/CardReveal'
 import PrimaryButton from '@/components/ui/PrimaryButton'
-
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 type DrawnCard = {
   title_th: string
@@ -13,10 +12,6 @@ type DrawnCard = {
   reflection_prompt_th: string | null
   sort_order: number
   card_categories: { name_th: string } | null
-}
-
-function toBangkokDate(ts: string): string {
-  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Bangkok' }).format(new Date(ts))
 }
 
 export default async function CardsPage({

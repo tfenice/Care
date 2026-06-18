@@ -1,23 +1,13 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { UUID_RE, toBangkokDate, formatBangkokDisplay } from '@/lib/utils'
 import { getCategoryToken } from '@/lib/card-tokens'
 import { getSecondPageContent } from '@/lib/card-second-page'
 import { SecondPage } from '@/components/care/SecondPage'
 import PrimaryButton from '@/components/ui/PrimaryButton'
 
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-
-function toBangkokDate(ts: string): string {
-  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Bangkok' }).format(new Date(ts))
-}
-
 function formatThaiDate(ts: string): string {
-  return new Intl.DateTimeFormat('th-TH', {
-    timeZone: 'Asia/Bangkok',
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  }).format(new Date(ts))
+  return formatBangkokDisplay(ts, { day: 'numeric', month: 'long', year: 'numeric' })
 }
 
 export default async function SecondPageRoute({

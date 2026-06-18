@@ -6,6 +6,7 @@
 
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { formatCardCode } from '@/lib/utils'
 import ChapterCard, { CardPaper, EditorialWindow } from '@/components/care/ChapterCard'
 import CardBack from '@/components/care/CardBack'
 import { getCategoryToken } from '@/lib/card-tokens'
@@ -140,7 +141,7 @@ export default async function PreviewPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {SPEC_CARDS.map((card) => {
               const token = getCategoryToken(card.category)
-              const code = `${token.code}-${String(card.sortOrder).padStart(2, '0')}`
+              const code = formatCardCode(token.code, card.sortOrder)
               return (
                 <div key={card.category} className="space-y-2">
                   <CardPaper style={{ boxShadow: 'var(--paper-shadow-page)' }}>
@@ -178,7 +179,7 @@ export default async function PreviewPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {SPEC_CARDS.map((card) => {
               const token = getCategoryToken(card.category)
-              const code = `${token.code}-${String(card.sortOrder).padStart(2, '0')}`
+              const code = formatCardCode(token.code, card.sortOrder)
               return (
                 <div key={card.category} className="space-y-2">
                   <CardPaper style={{ boxShadow: 'var(--paper-shadow-page)' }}>

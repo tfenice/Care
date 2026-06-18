@@ -1,12 +1,11 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { UUID_RE } from '@/lib/utils'
 import { getCategoryToken } from '@/lib/card-tokens'
 import { CardSignature } from '@/components/care/CardSignature'
 import ChapterCard from '@/components/care/ChapterCard'
 import PageShell from '@/components/ui/PageShell'
-
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 type CardDetail = {
   title_th: string
@@ -18,9 +17,10 @@ type CardDetail = {
 
 function formatThaiDate(iso: string): string {
   const d = new Date(iso)
-  const day   = new Intl.DateTimeFormat('en-CA', { day: 'numeric',   timeZone: 'Asia/Bangkok' }).format(d)
-  const month = new Intl.DateTimeFormat('th-TH', { month: 'long',    timeZone: 'Asia/Bangkok' }).format(d)
-  const year  = new Intl.DateTimeFormat('en-CA', { year: 'numeric',  timeZone: 'Asia/Bangkok' }).format(d)
+  const bk = { timeZone: 'Asia/Bangkok' } as const
+  const day   = new Intl.DateTimeFormat('en-CA', { ...bk, day: 'numeric' }).format(d)
+  const month = new Intl.DateTimeFormat('th-TH', { ...bk, month: 'long' }).format(d)
+  const year  = new Intl.DateTimeFormat('en-CA', { ...bk, year: 'numeric' }).format(d)
   return `${day} ${month} ${year}`
 }
 

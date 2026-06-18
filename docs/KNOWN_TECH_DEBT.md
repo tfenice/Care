@@ -69,10 +69,6 @@ Items marked **POST-BETA** are explicitly deferred and will not block the privat
 **Impact:** If any admin data-fetching logic is moved to a Client Component, credentials could leak to the browser.
 **Fix:** Keep `app/admin/page.tsx` as a Server Component. Never add `"use client"` to it.
 
-### DEMO-01 — Stale demo library files remain on disk
-**Impact:** `lib/demo/` contains `dashboard.ts`, `history.ts`, `memory.ts`, `growth.ts`, `admin.ts`. These are no longer imported by any page. They add noise and could confuse future contributors.
-**Fix:** Delete `lib/demo/` entirely. Update README project structure accordingly.
-
 ---
 
 ## Low (polish before public launch)
@@ -97,3 +93,5 @@ No backend implementation. Users cannot currently delete or export their data. C
 | UI-04 — Profile email shows demo value | Profile page now reads `user.email` from the auth session. |
 | AUTH-05 — Raw error code in browser URL | `auth/callback/route.ts` now logs raw error server-side only; redirects with opaque `link_invalid` code. `auth.ts` already used opaque codes. Login page maps all codes to friendly Thai. |
 | PREVIEW-01 — `/preview` was publicly accessible | `/preview` now requires `FOUNDER_EMAIL` authentication, same gate as `/admin`. |
+| DEMO-01 — Stale demo library files | `lib/demo/` (5 files) deleted. `types/api.ts` deleted. `public/*.svg` default assets deleted. |
+| NAV-01 — Profile unreachable from home | Gentle `บัญชี` link added to all three home page phases (discovery/relationship/companion) via shared `QuietLink` component. |
