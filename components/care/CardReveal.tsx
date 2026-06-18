@@ -5,6 +5,8 @@ import CardBack from './CardBack'
 import { getCategoryToken, categoryPillStyle, categoryAccentStyle } from '@/lib/card-tokens'
 import { CategorySymbol } from '@/components/care/card-symbols'
 import { CardSignature } from '@/components/care/CardSignature'
+import { CardIllustration } from '@/components/care/CardIllustration'
+import { hasIllustration } from '@/lib/card-illustrations'
 import PrimaryButton from '@/components/ui/PrimaryButton'
 
 type Phase = 'back' | 'fading' | 'face'
@@ -69,7 +71,7 @@ export default function CardReveal({ category, titleTh, bodyTh, reflectionPrompt
           boxShadow: '0 16px 48px rgba(139,111,78,0.12), 0 2px 8px rgba(139,111,78,0.06)',
         }}
       >
-        {/* Paper grain */}
+        {/* Paper grain — full card */}
         <div
           className="absolute inset-0 pointer-events-none select-none"
           aria-hidden="true"
@@ -79,25 +81,39 @@ export default function CardReveal({ category, titleTh, bodyTh, reflectionPrompt
           }}
         />
 
-        {/* Inner frame */}
+        {/* Inner frame — full card */}
         <div
           className="absolute inset-2 rounded-[20px] pointer-events-none select-none"
           aria-hidden="true"
           style={{ border: '1px solid rgba(201,169,122,0.18)' }}
         />
 
-        {/* Watermark motif */}
+        {/* Emotional Window — upper visual zone, ~35% of card height */}
         <div
-          className="absolute inset-0 flex items-center justify-center pointer-events-none select-none"
+          className="relative w-full overflow-hidden"
+          style={{ height: '192px' }}
           aria-hidden="true"
-          style={{ color: token.color, opacity: 0.06 }}
         >
-          <CardSignature code={code} category={category} size="watermark" />
+          {code && hasIllustration(code) ? (
+            <CardIllustration code={code} />
+          ) : (
+            <div
+              className="absolute inset-0 flex items-center justify-center pointer-events-none select-none"
+              style={{ color: token.color, opacity: 0.06 }}
+            >
+              <CardSignature code={code} category={category} size="watermark" />
+            </div>
+          )}
+          {/* Window floor */}
+          <div
+            className="absolute bottom-0 inset-x-0 pointer-events-none"
+            style={{ borderBottom: '1px solid rgba(201,169,122,0.10)' }}
+          />
         </div>
 
         {/* Card content */}
-        <div className="relative px-8 pt-10 pb-8 space-y-8">
-          {/* Category header: pill + separator — fade in as one unit */}
+        <div className="relative px-8 pt-6 pb-8 space-y-8">
+          {/* Category header: pill + separator */}
           <div
             className="care-section-in space-y-5"
             style={{ animationDelay: '0ms' }}
